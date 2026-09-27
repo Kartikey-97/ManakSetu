@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { useRouter } from '@/router';
+import { useAuth } from '@/auth/AuthContext';
 import { reports, getAnalysisById, getStandardById, getSpecificationRequirementsByAnalysisId } from '@/data/mockData';
 import { listRealAnalyses, deleteRealAnalysis } from '@/data/runtimeStore';
 import { formatDate } from '@/utils/format';
@@ -61,7 +62,7 @@ function getRealReports(): Report[] {
       format: 'PDF' as const,
       pages: 0,
       status: a.status === 'failed' ? 'failed' as const : a.status === 'completed' ? 'ready' as const : 'generating' as const,
-      author: 'StandIQ Intelligence Engine',
+      author: 'ManakSetu Intelligence Engine',
     }))
     .sort((a, b) => time(b) - time(a));
 }
@@ -76,6 +77,7 @@ type ReportState = 'demo' | 'failed' | 'stale' | 'ok';
 
 export function ReportsPage() {
   const { navigate } = useRouter();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<ReportType | 'all'>('all');
   const [previewReport, setPreviewReport] = useState<Report | null>(null);
@@ -110,13 +112,35 @@ export function ReportsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const handleEmailReport = async (reportId: string, analysisId: string) => {
+    if (!user?.email) {
+      alert('Please sign in with a valid email address to send reports.');
+      return;
+    }
     setIsEmailing(reportId);
     try {
-      const res = await fetch(`${API_ROOT}/analyses/${analysisId}/report/email`, { method: 'POST', headers: { 'X-API-Key': API_KEY } });
-      if (!res.ok) throw new Error('Failed to send email via n8n');
-      alert('Report successfully dispatched for email delivery via n8n!');
-    } catch (err) {
-      alert('Failed to send email. Check backend logs.');
+      const res = await fetch(`${API_ROOT}/analyses/${encodeURIComponent(analysisId)}/report/email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': API_KEY,
+        },
+        body: JSON.stringify({ recipient_email: user.email }),
+      });
+      if (!res.ok) {
+        let message = `Failed to send email (${res.status}).`;
+        try {
+          const body = await res.json();
+          message = body?.detail?.message || body?.detail?.error || body?.message || message;
+        } catch {
+          // non-JSON error body; keep the generic message
+        }
+        throw new Error(message);
+      }
+      const data = await res.json().catch(() => null);
+      alert(data?.message || 'Report successfully dispatched for email delivery!');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send email.';
+      alert(message);
     } finally {
       setIsEmailing(null);
     }
@@ -151,7 +175,7 @@ export function ReportsPage() {
       url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `StandIQ-Report-${report.analysisId}.pdf`;
+      link.download = `ManakSetu-Report-${report.analysisId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -359,7 +383,7 @@ export function ReportsPage() {
                         <div className="mt-4 grid grid-cols-3 gap-2">
                           <Button variant="secondary" size="sm" leftIcon={<Eye size={13} />} onClick={() => setPreviewReport(report)}>View</Button>
                           <Button variant="secondary" size="sm" disabled={isDownloading === report.id || state === 'failed'} title={state === 'stale' ? 'Not on server — prints the cached preview' : undefined} leftIcon={<Download size={13} />} onClick={(e) => { e.stopPropagation(); handleDownloadPdf(report); }}>{isDownloading === report.id ? '...' : state === 'stale' ? 'Print' : 'PDF'}</Button>
-                          <Button variant="secondary" size="sm" disabled={isEmailing === report.id || state === 'failed' || state === 'stale'} title={state === 'stale' ? 'Not on server — email needs the server analysis' : undefined} leftIcon={<Send size={13} />} onClick={(e) => { e.stopPropagation(); handleEmailReport(report.id, report.analysisId); }}>{isEmailing === report.id ? '...' : 'Email'}</Button>
+                          <Button variant="secondary" size="sm" disabled={isEmailing === report.id || state === 'failed' || state === 'stale' || !user?.email} title={!user?.email ? 'Sign in with an email address to send reports' : state === 'stale' ? 'Not on server — email needs the server analysis' : undefined} leftIcon={<Send size={13} />} onClick={(e) => { e.stopPropagation(); handleEmailReport(report.id, report.analysisId); }}>{isEmailing === report.id ? '...' : 'Email'}</Button>
                         </div>
                       </Card>
                     </motion.div>
@@ -477,8 +501,10 @@ export function ReportsPage() {
 }
 
 function ReportPreviewModal({ report, onClose, isEmailing, handleEmailReport, isDownloading, handleDownloadPdf, state }: { report: Report; onClose: () => void; isEmailing: string | null; handleEmailReport: (rId: string, aId: string) => void; isDownloading: string | null; handleDownloadPdf: (report: Report) => void; state: ReportState }) {
+  const { user } = useAuth();
   const emailBlockedReason =
-    state === 'demo' ? 'Demo report — email needs a real analysis on the server'
+    !user?.email ? 'Sign in with an email address to send reports'
+    : state === 'demo' ? 'Demo report — email needs a real analysis on the server'
     : state === 'stale' ? 'Not on server — email needs the server analysis'
     : state === 'failed' ? 'The analysis failed; there is no report to send'
     : undefined;
@@ -574,7 +600,7 @@ function ReportPreviewModal({ report, onClose, isEmailing, handleEmailReport, is
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[11px] font-mono font-semibold uppercase tracking-widest text-teal-800 dark:text-teal-400">
-                  StandIQ Technical Procurement Intelligence Platform
+                  ManakSetu Technical Procurement Intelligence Platform
                 </p>
                 <h1 className="text-xl font-bold tracking-tight text-ink-900 dark:text-white mt-1">
                   {report.title}
@@ -691,7 +717,7 @@ function ReportPreviewModal({ report, onClose, isEmailing, handleEmailReport, is
           {/* Section 4: Audit Provenance & Sign-off */}
           <div className="border-t border-ink-200 pt-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono text-ink-500 dark:text-slate-400">
             <div>
-              <p>Generated by StandIQ v2.4 Intelligence Engine</p>
+              <p>Generated by ManakSetu v2.4 Intelligence Engine</p>
               <p>Evidence records cryptographic signature: {analysis?.id.split('-')[0] || '9a8f'}…73b2</p>
             </div>
             <div className="rounded border border-ink-300 bg-ivory-50 p-2.5 dark:border-slate-700 dark:bg-[#161f30] text-center sm:text-right">
