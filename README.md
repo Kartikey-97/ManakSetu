@@ -2,36 +2,50 @@
 
 **Live Deployment:** [project-manak-setu.vercel.app](https://project-manak-setu.vercel.app)
 
-ManakSetu is an advanced regulatory technology (RegTech) and procurement intelligence platform designed to interface with the Bureau of Indian Standards (BIS) catalogue. By combining hybrid vector search with large language models, the platform analyzes tender documents, technical specifications, and free-text queries to recommend precise compliance requirements, detect regulatory gaps, and map Quality Control Orders (QCOs).
+ManakSetu is a compliance and procurement intelligence platform designed to interface with the Bureau of Indian Standards (BIS) catalogue. Using a Retrieval-Augmented Generation (RAG) architecture, the system processes tender documents, technical specifications, and free-text queries to identify applicable standards, detect regulatory gaps, and map Quality Control Orders (QCOs).
 
-## Core Intelligence Architecture
+## System Workflow
 
-ManakSetu operates on a foundational Retrieval-Augmented Generation (RAG) architecture utilizing MiniLM embeddings and FAISS/Qdrant vector stores. Rather than relying on model fine-tuning or generative assumptions, the system enforces strict deterministic grounding through six specialized intelligence modules residing in the `ai-engine/src/` package:
+```mermaid
+flowchart TD
+    User([User / Procurement Officer]) -->|Uploads Tender or Query| UI(React Frontend)
+    UI -->|API Request| Backend(FastAPI Backend)
+    
+    Backend -->|Extract Text & Structure| Parser[PyMuPDF Parser]
+    Parser -->|Raw Context| Orchestrator[Backend Orchestrator]
+    Orchestrator -->|Analyze Request| AI_Engine(AI Engine)
+    
+    subgraph Intelligence & RAG Pipeline
+        AI_Engine -->|1. Decompose| ReqAnalyst[Requirement Analysis]
+        ReqAnalyst -->|Hybrid Search| VectorDB[(FAISS / pgvector)]
+        VectorDB -->|Raw Results| Ranker[Semantic Ranking]
+        Ranker -->|Top Candidates| Evidence[Provenance Tracking]
+        Evidence -->|Verified Matches| IssueDet[Issue & QCO Detection]
+        IssueDet -->|Findings| ConfScore[Confidence Scoring]
+    end
+    
+    ConfScore -->|Aggregated Data| Recommender[End-to-End Synthesis]
+    Recommender -->|Structured JSON| Orchestrator
+    Orchestrator -->|Compliance Report| UI
+```
 
-1. **Requirement-Level Analysis (`requirement_analysis.py`)**
-   Decomposes monolithic tender documents and complex queries into granular, analyzable requirements for precise standard matching.
+## Core Intelligence Capabilities
 
-2. **Semantic Relevance & Ranking (`ranking.py`)**
-   Evaluates retrieved standards against specific requirements, scoring them on deep semantic relevance rather than relying solely on raw vector proximity.
+ManakSetu operates on a foundation of MiniLM embeddings and vector search. To ensure accuracy and prevent generative hallucinations, the AI engine enforces strict deterministic grounding through specialized intelligence modules:
 
-3. **Provenance & Evidence Tracking (`evidence.py`)**
-   Ensures zero hallucination by grounding every claim directly in the extracted text. Evidence is only emitted from fields explicitly present in the verified record; unverified knowledge-base fields remain strictly flagged as unverified.
-
-4. **Automated Issue Detection (`issue_detector.py`)**
-   Scans for outdated designations, conflicting specifications, and QCO compliance failures. High-severity or unverified findings are immediately escalated for human review.
-
-5. **Confidence & Uncertainty Scoring (`confidence.py`)**
-   Quantifies the reliability of each match based on retrieval quality and contextual density, openly acknowledging uncertainty when data is thin.
-
-6. **End-to-End Orchestration (`recommender.py`)**
-   Synthesizes the outputs of the above modules into a highly structured result payload containing requirements, analyses, recommendations, rankings, evidence, issues, confidence metrics, alerts, and human-review flags.
+*   **Requirement Extraction & Decomposition**: Rather than evaluating entire monolithic documents at once, the system parses complex tenders into granular, isolated requirements. This enables highly targeted standard matching.
+*   **Semantic Relevance & Ranking**: Moves beyond simple vector distance calculation. Retrieved standards are evaluated against the specific nuances of the extracted requirements, ensuring true contextual relevance.
+*   **Strict Provenance Tracking**: Hallucinations are mitigated by anchoring every recommendation to exact text within the verified BIS record. If a knowledge-base field is unverified, it is explicitly flagged to the user.
+*   **Automated Issue Detection**: The system actively scans retrieved standards against current regulatory rules, flagging outdated designations, conflicting specifications, and QCO compliance failures for human review.
+*   **Confidence Scoring**: Assigns reliability metrics to each match based on the quality of the retrieval and the density of the context, openly acknowledging uncertainty when source data is ambiguous.
+*   **Structured Synthesis**: A final orchestration layer compiles the granular analyses, ranked standards, evidence, and actionable alerts into a cohesive, structured payload for the frontend.
 
 ## Technical Stack
 
-*   **Frontend:** React 18, Vite, Tailwind CSS (Deployed on Vercel)
-*   **Backend API:** Python, FastAPI, SQLAlchemy, asyncpg, PyMuPDF (PDF intelligence)
-*   **AI Engine:** Python, FastAPI, Google Gemini API, Scikit-Learn (Applicability modeling), FAISS, pgvector
-*   **Database:** PostgreSQL
+*   **Frontend:** React 18, Vite, Tailwind CSS (Vercel)
+*   **Backend API:** Python, FastAPI, SQLAlchemy, asyncpg, PyMuPDF (Render)
+*   **AI Engine:** Python, FastAPI, Google Gemini API, Scikit-Learn, FAISS (Render)
+*   **Database:** PostgreSQL with `pgvector`
 
 ## System Architecture & Deployment
 
