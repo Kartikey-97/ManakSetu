@@ -233,7 +233,7 @@ async def _step_extract(analysis: Analysis) -> str:
 
     ai_extraction_succeeded = False
     try:
-        ai_requirements = await asyncio.wait_for(
+        ai_requirements, profile_dict = await asyncio.wait_for(
             asyncio.to_thread(
                 extract_requirements,
                 analysis_id=analysis.id,
@@ -243,6 +243,7 @@ async def _step_extract(analysis: Analysis) -> str:
         )
         analysis.requirements = ai_requirements
         analysis.total_requirements = len(ai_requirements)
+        analysis.product_profile = profile_dict
         ai_extraction_succeeded = True
         logger.info(
             "_step_extract: AI extraction succeeded — %d requirements found. analysis_id=%s",
@@ -286,9 +287,9 @@ async def _step_extract(analysis: Analysis) -> str:
                     text=ref["matched_text"],
                     normalized_text=ref["matched_text"],
                     category=RequirementCategory.TECHNICAL_SPECIFICATION,
-                    is_reference=ref["is_number"],
+                    is_reference=ref["designation"],
                     cited_year=ref["year"],
-                    cited_designation=ref["matched_text"],
+                    cited_designation=ref["citation"],
                     extraction_confidence=0.6,
                 )
                 for ref in is_refs
@@ -325,36 +326,108 @@ async def _step_retrieve(
 
     from kartikey.orchestration.knowledge_registry import get_registry
     from kshiraj.knowledge.retrieval_service import RetrievalQuery
+    from kartikey.document_processing.extractor import base_is_number
 
     registry = get_registry()
     retrieved_standards: list[Standard] = []
     seen_ids: set[str] = set()
 
+    # requirement_id -> {standard_id: best score retrieved for THAT requirement}.
+    # The global list below is deduplicated across requirements, which loses
+    # which requirement retrieved which standard. This map keeps it, so
+    # findings assembly can refuse to attach a standard to a requirement it was
+    # never retrieved for. Recorded before the global dedup on purpose.
+    requirement_candidates: dict[str, dict[str, float]] = {
+        req.id: {} for req in analysis.requirements
+    }
+    exact_ids_by_req: dict[str, set[str]] = {req.id: set() for req in analysis.requirements}
+
+    # IS-number exact lookup pass
     for req in analysis.requirements:
-        # If the requirement cites a specific IS number, use that as the primary query.
-        # Otherwise, use the raw text. The retrieval service handles both.
-        query_text = req.is_reference if req.is_reference else req.text
+        if not req.is_reference:
+            continue
+        matches = registry.standards_store.get_by_is_number(req.is_reference)
+        for std in matches:
+            requirement_candidates[req.id][std.id] = 1.0
+            exact_ids_by_req[req.id].add(std.id)
+            if std.id not in seen_ids:
+                seen_ids.add(std.id)
+                # An explicit citation is a perfect match by definition
+                std_copy = std.model_copy()
+                std_copy.relevance_score = 1.0
+                std_copy.semantic_score = 1.0
+                retrieved_standards.append(std_copy)
+
+    # Two-pass: collect all unique semantic candidates first (preserving best score per standard),
+    # then sort globally by score descending before applying the global cap.
+    # This ensures high-scoring standards from later requirements (e.g. IS 10242 at req 5 rank 1,
+    # score=0.86) are not displaced by lower-scoring standards that happened to arrive earlier.
+    semantic_scores: dict[str, float] = {}   # id -> best fused score seen
+    semantic_stds: dict[str, object] = {}    # id -> Standard object
+
+    product_context = ""
+    if hasattr(analysis, 'product_profile') and isinstance(analysis.product_profile, dict):
+        product_name = analysis.product_profile.get("product", "")
+        category_name = analysis.product_profile.get("category", "")
+        context_parts = [p for p in [product_name, category_name] if p and p.lower() not in {"not stated", "unknown"}]
+        if context_parts:
+            product_context = f"[{' | '.join(context_parts)}] "
+
+    for req in analysis.requirements:
+        # is_reference may name a part ("IS 10322 : Part 5 : Sec 3"); the lexical
+        # search still gets the base number, as it always has — the part's
+        # tokens would pull in unrelated parts of other standards.
+        base_query = base_is_number(req.is_reference) if req.is_reference else req.text
+        query_text = f"{product_context}{base_query}"
         
-        # We don't need a huge top_k per requirement because many will hit the same core standards
         query = RetrievalQuery(
             query_text=query_text,
-            top_k=3,
-            include_evidence=False,  # Evidence is fetched separately in enrichment
+            top_k=8,
+            include_evidence=False,
         )
-        
+
         result = registry.retrieval_service.search_standards(query)
-        
+
+        # Lexical scores are unbounded weighted sums; the shared copy's
+        # relevance_score reaches the API and must be in [0, 1], as hybrid's
+        # already is. Scale by this query's top score, as hybrid does for its
+        # lexical part. Hybrid scores are <= 1, so the divisor leaves them as-is.
+        top_score = max((c.score or 0.0 for c in result.candidates), default=0.0)
+        display_divisor = max(1.0, top_score)
+
+        req_candidates = requirement_candidates[req.id]
+        req_exact_ids = exact_ids_by_req[req.id]
         for candidate in result.candidates:
-            if candidate.standard.id not in seen_ids:
-                seen_ids.add(candidate.standard.id)
-                retrieved_standards.append(candidate.standard)
+            sid = candidate.standard.id
+            score = candidate.score or 0.0
+            # An exact citation keeps its 1.0, as it does in the global list;
+            # lexical scores are unnormalised and must not overwrite it.
+            # Raw scores here: this map is the AI/ML engine's input.
+            if sid not in req_exact_ids and score > req_candidates.get(sid, -1.0):
+                req_candidates[sid] = score
+            if sid in seen_ids:
+                continue  # already added via exact-match pass; skip
+            # Ordering and the cap below use the raw score; only the display
+            # copy's relevance_score is scaled.
+            if sid not in semantic_scores or score > semantic_scores[sid]:
+                semantic_scores[sid] = score
+                candidate.standard.relevance_score = score / display_divisor
+                semantic_stds[sid] = candidate.standard
+
+    # Sort by best score descending, then extend exact-match list
+    sorted_semantic = sorted(semantic_stds.values(), key=lambda s: semantic_scores[s.id], reverse=True)
+    retrieved_standards.extend(sorted_semantic)
+
+    # Stored on the analysis rather than returned so the return type — which
+    # other callers of this step depend on — is unchanged. _step_enrich reads it.
+    analysis.metadata["requirement_candidates"] = requirement_candidates
 
     logger.info(
         "_step_retrieve: found %d distinct standards across %d requirements. analysis_id=%s",
         len(retrieved_standards), len(analysis.requirements), analysis.id,
     )
-    
-    return retrieved_standards
+
+    return retrieved_standards[:35]
 
 
 # ===========================================================================
@@ -394,7 +467,9 @@ async def _step_analyze(
         analysis_id=analysis.id,
         extracted_text=extracted_text,
         requirements=analysis.requirements,
+        # Pooled list, sent for compatibility only — not a reasoning input.
         retrieved_standards=retrieved_standards,
+        requirement_candidates=_candidate_standards_by_requirement(analysis),
     )
     
     try:
@@ -415,6 +490,63 @@ async def _step_analyze(
         return None
 
 
+def _candidate_standards_by_requirement(analysis: Analysis) -> dict[str, list[Standard]]:
+    """
+    Build each requirement's own reasoning input from the candidate map that
+    _step_retrieve recorded: that requirement's standards only, each copied
+    with that requirement's retrieval score, cited standards first and then
+    highest score first.
+
+    The score on the pooled `retrieved_standards` copies is the best score seen
+    across *all* requirements, so it is deliberately not used here. semantic_score
+    is 1.0 for a standard this requirement cites exactly (as the exact-match pass
+    has always set it) and None otherwise.
+
+    No map means no candidates for anyone — never a fallback to the pool.
+    """
+    from kartikey.orchestration.knowledge_registry import get_registry
+
+    raw = analysis.metadata.get("requirement_candidates")
+    if not isinstance(raw, dict):
+        logger.warning(
+            "_step_analyze: no requirement_candidates recorded for analysis_id=%s; "
+            "every requirement is sent with no candidate standards.",
+            analysis.id,
+        )
+        raw = {}
+
+    store = get_registry().standards_store
+    by_requirement: dict[str, list[Standard]] = {}
+
+    for req in analysis.requirements:
+        scores = raw.get(req.id) or {}
+        cited_ids = (
+            {s.id for s in store.get_by_is_number(req.is_reference)}
+            if req.is_reference else set()
+        )
+        candidates: list[Standard] = []
+        for sid, score in scores.items():
+            std = store.get_by_id(sid)
+            if std is None:
+                logger.warning(
+                    "_step_analyze: candidate standard_id=%s for requirement_id=%s "
+                    "is not in the store — skipped.", sid, req.id,
+                )
+                continue
+            candidates.append(std.model_copy(update={
+                "relevance_score": float(score),
+                "semantic_score": 1.0 if sid in cited_ids else None,
+            }))
+        # Cited standards first, then by this requirement's score — the same
+        # ordering the global list has always used.
+        candidates.sort(key=lambda s: (
+            s.id not in cited_ids, -(s.relevance_score or 0.0), s.is_number,
+        ))
+        by_requirement[req.id] = candidates
+
+    return by_requirement
+
+
 # ===========================================================================
 # 4. Enrich — Findings Assembly & Compliance Rules (Step 6/7)
 # ===========================================================================
@@ -432,14 +564,35 @@ async def _step_enrich(
 
     from kartikey.orchestration.knowledge_registry import get_registry
     from kartikey.analysis.findings import assemble_findings
+    from shared.models import StandardStatus
 
     registry = get_registry()
 
+
+
     # Pass lookup dicts to the assembler so it can resolve any ID the AI/ML returns
     # to a real object. This enforces the anti-hallucination guardrail.
+    # Build from store first, then overlay retrieved copies — retrieved copies carry
+    # the actual relevance_score from the retrieval pass, which flows through to the
+    # API response and powers the frontend applicability score display.
     standards_lookup = {std.id: std for std in registry.standards_store.list_all()}
+    for std in retrieved_standards:
+        if std.id in standards_lookup and std.relevance_score is not None:
+            standards_lookup[std.id] = std
     # We fetch all evidence here; a production DB would use IN queries.
     evidence_lookup = {ev.id: ev for ev in registry.evidence_store.list_all()}
+
+    # Set by _step_retrieve. Absent only when enrichment runs without a
+    # retrieval pass; then no requirement has candidates and nothing the AI/ML
+    # proposed is attached — there is no unscoped fallback on this path.
+    requirement_candidates = analysis.metadata.get("requirement_candidates")
+    if not isinstance(requirement_candidates, dict):
+        if aiml_response is not None and analysis.requirements:
+            logger.warning(
+                "_step_enrich: no requirement_candidates for analysis_id=%s; "
+                "AI/ML standard mappings will all be rejected.", analysis.id,
+            )
+        requirement_candidates = {}
 
     findings = assemble_findings(
         analysis=analysis,
@@ -447,6 +600,7 @@ async def _step_enrich(
         aiml_response=aiml_response,
         standards_lookup=standards_lookup,
         evidence_lookup=evidence_lookup,
+        requirement_candidates=requirement_candidates,
     )
     analysis.findings = findings
 
@@ -458,6 +612,51 @@ async def _step_enrich(
         aiml_response is not None,
         len(retrieved_standards),
     )
+
+    # ── QCO Applicability Check ────────────────────────────────────────────────
+    try:
+        from kartikey.analysis.certification_engine import check_qco_applicability
+        _profile = {}
+        if hasattr(analysis, 'product_profile') and analysis.product_profile:
+            _profile = analysis.product_profile if isinstance(analysis.product_profile, dict) else {}
+        # IS numbers genuinely on this tender: standards applicable to a
+        # requirement, plus the catalogue standards each requirement cites
+        # (resolved as the exact-match retrieval pass resolves them, so a cited
+        # standard counts even when the AI/ML found nothing applicable).
+        # Merely retrieved candidates are excluded — an IS-number match is
+        # reported as a hard fact about the tender. is_number, not designation:
+        # designation carries ":<year>", which never equals a QCO key.
+        _is_nums: list[str] = []
+        _seen_is: set[str] = set()
+
+        def _add_is(std) -> None:
+            num = getattr(std, "is_number", None)
+            if num and num not in _seen_is:
+                _seen_is.add(num)
+                _is_nums.append(num)
+
+        for f in findings:
+            for std in f.applicable_standards:
+                _add_is(std)
+        for req in analysis.requirements:
+            if req.is_reference:
+                for std in registry.standards_store.get_by_is_number(req.is_reference):
+                    _add_is(std)
+        _qco_results = check_qco_applicability(
+            product_profile=_profile,
+            matched_is_numbers=_is_nums,
+        )
+        analysis.qco_findings = _qco_results  # Store on analysis object
+        logger.info("QCO check: %d applicable orders found for analysis %s", len(_qco_results), analysis.id)
+    except Exception as exc:
+        logger.warning("QCO check failed silently: %s", exc)
+        # Never crash the pipeline
+    # ── End QCO Check ──────────────────────────────────────────────────────────
+
+    # ── Non-blocking BIS live sync (fire-and-forget) ───────────────────────────
+    asyncio.create_task(_trigger_bis_sync(analysis))
+    # ── End BIS sync trigger ───────────────────────────────────────────────────
+
 
 
 # ===========================================================================
@@ -473,3 +672,124 @@ def _transition(analysis: Analysis, new_status: AnalysisStatus) -> None:
         "Analysis %s: %s → %s",
         analysis.id, old, new_status.value,
     )
+
+async def _trigger_bis_sync(analysis: Analysis) -> None:
+    """
+    Fire-and-forget BIS live metadata sync for matched standards.
+
+    RULES (all must be respected):
+    1. NEVER raises — any exception is logged and swallowed silently.
+    2. NEVER blocks the pipeline — called as asyncio.create_task().
+    3. Only syncs up to 3 standards (don't hammer BIS portal).
+    4. Respects ENABLE_BIS_SYNC env/config — disabled in tests.
+    5. Handles null BIS responses: if result.errors is non-empty, records
+       the errors so the UI can show "sync attempted — N errors" gracefully.
+    """
+    from shared.config import get_settings
+    cfg = get_settings()
+    if not getattr(cfg, 'enable_bis_sync', True):
+        return
+
+    try:
+        from kshiraj.bis_live_ingestion.adapters.bis_client import BISClient, BISClientConfig
+        from kshiraj.bis_live_ingestion.sync import BISSyncService
+        from kartikey.orchestration.knowledge_registry import get_registry
+        from shared.sync_state import mark_sync_finished, mark_sync_started, record_sync_result
+        from datetime import datetime, timezone
+
+        registry = get_registry()
+        store = registry.standards_store
+
+        # Use std.is_number (bare base, e.g. "IS 16107") NOT std.designation
+        # ("IS 16107:2023 Amd.1") — the normalizer strips years but not Amd.N suffixes,
+        # causing exact-match failures in sync.py.
+        is_numbers: list[str] = []
+        seen: set[str] = set()
+        for finding in (analysis.findings or []):
+            for std in (finding.applicable_standards or []):
+                base = getattr(std, 'base_designation', None) or getattr(std, 'is_number', None)
+                if base and base not in seen:
+                    seen.add(base)
+                    is_numbers.append(base)
+
+
+        if not is_numbers:
+            logger.debug("BIS sync: no designations to sync for analysis %s", analysis.id)
+            return
+
+        def _do_sync() -> None:
+            """Run blocking HTTP calls off the event loop thread."""
+            client_config = BISClientConfig(timeout_seconds=12.0, max_retries=1)
+            with BISClient(config=client_config) as client:
+                svc = BISSyncService(client=client, standards_store=store)
+                for is_number in is_numbers:
+                    result = svc.sync_designation(is_number)
+                    record_sync_result(
+                        is_number=is_number,
+                        synced_at=datetime.now(timezone.utc),
+                        changed=result.changed,
+                        errors=result.errors,
+                        analysis_id=analysis.id,
+                    )
+                    if result.errors:
+                        logger.warning("BIS sync error for %s: %s", is_number, result.errors)
+                    else:
+                        logger.info("BIS sync OK: %s changed=%s", is_number, result.changed)
+
+        # Run blocking sync calls in a thread pool so the event loop stays responsive.
+        # The running marker lets the status endpoint report progress ("3 of 19")
+        # instead of presenting a partial count as final; it is cleared however
+        # the sync ends.
+        mark_sync_started(analysis.id, planned=len(is_numbers))
+        try:
+            await asyncio.to_thread(_do_sync)
+        finally:
+            mark_sync_finished(analysis.id)
+
+    except Exception as exc:
+        # Absolute last-resort catch — pipeline must never see this exception
+        logger.warning("BIS sync _trigger_bis_sync failed: %s", exc)
+
+async def rescore_and_merge(analysis_id: str, new_standard: 'Standard') -> None:
+    """
+    Called after BIS Sync discovers a superseding standard.
+    Evaluates the new standard against the analysis requirements and injects it
+    into the existing findings if it is highly applicable.
+    """
+    from shared.config import settings
+    from kshiraj.aiml_client.client import AimlClient
+    from shared.contracts import AimlRequest
+    from kartikey.api.main import repository
+    from kartikey.document_processing.storage import get_extracted_text
+    from shared.models import Standard, InputType, Verdict
+
+    try:
+        analysis = await repository.get(analysis_id)
+        if not analysis:
+            return
+
+        modified = False
+        new_is_norm = new_standard.designation.replace(" ", "").lower() if hasattr(new_standard, "designation") else new_standard.is_number.replace(" ", "").lower()
+        
+        for finding in analysis.findings:
+            if not hasattr(finding, 'applicable_standards'):
+                continue
+                
+            for old_std in finding.applicable_standards:
+                if old_std.superseded_by:
+                    old_sup_norm = old_std.superseded_by.replace(" ", "").lower()
+                    if old_sup_norm == new_is_norm or old_sup_norm == new_standard.is_number.replace(" ", "").lower():
+                        if not any(ns.id == new_standard.id for ns in finding.applicable_standards):
+                            new_standard.relevance_score = getattr(old_std, 'relevance_score', 0.99)
+                            finding.applicable_standards.append(new_standard)
+                            modified = True
+                        break # Move to next finding
+
+        if modified:
+            await repository.save(analysis)
+            logger.info("rescore_and_merge: Successfully injected %s into findings for analysis %s", new_standard.is_number, analysis_id)
+        else:
+            logger.info("rescore_and_merge: %s did not supersede any existing standards in findings", new_standard.is_number)
+
+    except Exception as e:
+        logger.error("rescore_and_merge failed for analysis %s: %s", analysis_id, e)

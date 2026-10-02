@@ -102,6 +102,10 @@ def sample_aiml_request(sample_requirement_1, sample_requirement_2, sample_stand
         extracted_text="Sample procurement text for LED luminaires and cabling.",
         requirements=[sample_requirement_1, sample_requirement_2],
         retrieved_standards=[sample_standard_1, sample_standard_2],
+        requirement_candidates={
+            "req-1": [sample_standard_1],
+            "req-2": [sample_standard_2],
+        },
     )
 
 
@@ -242,6 +246,39 @@ class TestMockExecution:
         assert f1.verdict == "justified"
         assert f1.confidence == 0.90
 
+    @pytest.mark.asyncio
+    async def test_mock_uses_only_own_candidates(self, sample_aiml_request):
+        """req-2 cites IS 694, but IS 694 is not among its candidates here."""
+        request = sample_aiml_request.model_copy(update={
+            "requirement_candidates": {"req-1": [], "req-2": []},
+        })
+        response = await AimlClient(force_mock=True).run_analysis(request)
+        for f in response.findings:
+            assert f.applicable_standard_ids == []
+            assert f.verdict == "requires_human_verification"
+
+    @pytest.mark.asyncio
+    async def test_mock_gives_uncited_requirement_no_fallback_standard(
+        self, sample_aiml_request, sample_standard_1,
+    ):
+        uncited = Requirement(id="req-3", analysis_id="analysis-100", text="Five-year warranty.")
+        request = sample_aiml_request.model_copy(update={
+            "requirements": [uncited],
+            "requirement_candidates": {"req-3": [sample_standard_1]},
+        })
+        response = await AimlClient(force_mock=True).run_analysis(request)
+        assert response.findings[0].applicable_standard_ids == []
+
+    @pytest.mark.asyncio
+    async def test_mock_matches_citation_by_base_number(self, sample_aiml_request):
+        near_miss = Standard(id="std-900", is_number="IS 6946", title="T", status=StandardStatus.ACTIVE)
+        part = Standard(id="std-901", is_number="IS 694 : Part 1", title="T", status=StandardStatus.ACTIVE)
+        request = sample_aiml_request.model_copy(update={
+            "requirement_candidates": {"req-1": [], "req-2": [near_miss, part]},
+        })
+        response = await AimlClient(force_mock=True).run_analysis(request)
+        assert response.findings[1].applicable_standard_ids == ["std-901"]
+
 
 # ===========================================================================
 # 3. Client configuration & validation tests
@@ -251,11 +288,20 @@ class TestClientConfigAndValidation:
     """Tests for configuration selection and request validation."""
 
     def test_client_config_defaults_to_settings(self):
+        """
+        With no explicit overrides the mode is whatever settings say, in
+        priority order: HTTP service URL, then the Gemini final pass, then mock.
+        Asserted against settings rather than hardcoded, so the test does not
+        depend on which env vars the developer happens to have set.
+        """
         client = AimlClient()
         if settings.aiml_service_url:
-            assert client.is_mock is False
+            assert client.execution_mode == "http"
+        elif settings.gemini_final_pass_available:
+            assert client.execution_mode == "gemini"
         else:
-            assert client.is_mock is True
+            assert client.execution_mode == "mock"
+        assert client.is_mock is (client.execution_mode == "mock")
 
     def test_client_config_explicit_url(self):
         client = AimlClient(service_url="http://localhost:9000/analyze")
@@ -330,9 +376,15 @@ class TestHttpExecution:
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_httpx_response
 
-            client = AimlClient(service_url=url)
+            # Asserted against _run_http_analysis, which is the unit that owns
+            # the transport → AimlClientError mapping. run_analysis no longer
+            # lets any of these escape: it steps down the engine ladder instead,
+            # which is what TestEngineLadder in test_gemini_analyzer.py covers.
+            # Calling it here would assert on the fallback engine, not on the
+            # status-code mapping these four tests exist to pin.
+            client = AimlClient(service_url=url, use_gemini=False)
             with pytest.raises(AimlResponseError) as exc_info:
-                await client.run_analysis(sample_aiml_request)
+                await client._run_http_analysis(sample_aiml_request)
 
             assert exc_info.value.code == "HTTP_500"
             assert "500" in exc_info.value.message
@@ -343,9 +395,9 @@ class TestHttpExecution:
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.side_effect = httpx.TimeoutException("Read timed out")
 
-            client = AimlClient(service_url=url, timeout=5.0)
+            client = AimlClient(service_url=url, timeout=5.0, use_gemini=False)
             with pytest.raises(AimlTimeoutError) as exc_info:
-                await client.run_analysis(sample_aiml_request)
+                await client._run_http_analysis(sample_aiml_request)
 
             assert exc_info.value.code == "AIML_TIMEOUT"
 
@@ -355,9 +407,9 @@ class TestHttpExecution:
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.side_effect = httpx.RequestError("Connection refused")
 
-            client = AimlClient(service_url=url)
+            client = AimlClient(service_url=url, use_gemini=False)
             with pytest.raises(AimlResponseError) as exc_info:
-                await client.run_analysis(sample_aiml_request)
+                await client._run_http_analysis(sample_aiml_request)
 
             assert exc_info.value.code == "CONNECTION_ERROR"
 
@@ -378,7 +430,7 @@ class TestHttpExecution:
         with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
             mock_post.return_value = mock_httpx_response
 
-            client = AimlClient(service_url=url)
+            client = AimlClient(service_url=url, use_gemini=False)
             with pytest.raises(AimlResponseError) as exc_info:
                 await client.run_analysis(sample_aiml_request)
 

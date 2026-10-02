@@ -2,6 +2,18 @@
 kshiraj/enrichment/crossref_extractor.py
 
 Deterministic extraction of cross-referenced Indian Standards from standard text or scope.
+
+For a Standard input, all four reference-bearing fields are scanned: `scope`,
+`text_excerpt`, `normative_references`, and `related_standards`. The last two
+are the catalogue's own structured dependency lists and are the reason this is
+worth running at all — a tender that cites IS 16107 but never mentions the
+IS 10322 it normatively references is incomplete even though every citation in
+it is individually valid.
+
+Callers decide what an extracted reference *means*: this module reports what the
+text says and nothing more. In particular it does not drop self-references
+(IS 10322 Part 5 Sec 3 → IS 10322 Part 1 both normalise to "IS 10322"), because
+whether that matters depends on the caller's question.
 """
 
 from __future__ import annotations
@@ -13,10 +25,12 @@ from typing import List, Union
 from shared.models import Standard
 
 _IS_REF_RE = re.compile(
-    r"IS\s+"                # "IS " prefix (case-insensitive)
-    r"(\d+)"                # IS number digits
-    r"(?:\s*\(([^)]+)\))?"  # optional (Part N/Sec M)
-    r"(?:\s*:\s*(\d{4}))?"  # optional :YYYY year
+    r"(?:IS/IEC|IS/ISO|IS)\s+"  # prefix (case-insensitive)
+    r"(\d+)"                    # IS number digits
+    r"(?:\s*:\s*Part\s*\d+)?"   # optional Part N (ignoring capture)
+    r"(?:\s*:\s*Sec\s*\d+)?"    # optional Sec M
+    r"(?:\s*\([^)]+\))?"        # optional (Part N/Sec M) alternative format
+    r"(?:\s*:\s*(\d{4}))?"      # optional :YYYY year
     r"(?:\s+Amd\.?\s*(\d+))?",  # optional Amd.N
     re.IGNORECASE,
 )
@@ -60,6 +74,13 @@ class CrossRefExtractor:
                 text_parts.append(text_or_standard.scope)
             if text_or_standard.text_excerpt:
                 text_parts.append(text_or_standard.text_excerpt)
+            # The catalogue also records references as structured lists rather
+            # than prose ("IS 10322 : Part 1"). They are the authoritative
+            # dependencies — scope text only mentions them in passing, if at all
+            # — so scan them too. Same regex: the entries are designation
+            # strings, which is exactly what it matches.
+            text_parts.extend(text_or_standard.normative_references)
+            text_parts.extend(text_or_standard.related_standards)
             combined_text = "\n".join(text_parts)
         elif isinstance(text_or_standard, str):
             combined_text = text_or_standard

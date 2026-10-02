@@ -1,0 +1,340 @@
+--- Page 1 ---
+ABESEC Ghaziabad
+Department of Computer Science & Engineering
+SYNOPSIS REPORT
+Session 2026–27
+Project Title:
+[Use the project title already registered with the department]
+Project Type:
+Application / Research-Oriented Software Project
+Name:
+[Student Name]
+Roll Number:
+[Roll Number]
+Section:
+[Section]
+Signature:
+Group Member (1):
+[Name]
+Roll Number:
+[Roll Number]
+Section:
+[Section]
+Signature:
+Group Member (2):
+[Name]
+Roll Number:
+[Roll Number]
+Section:
+[Section]
+1
+
+--- Page 2 ---
+Signature:
+Project Guide:
+[Guide Name]
+Signature:
+Remarks:
+Date of Submission:
+18 August 2026
+1.1 Problem Introduction
+Recent advances in Large Language Models (LLMs) and generative AI have enabled the development of
+interactive non-player characters (NPCs) capable of natural-language conversation, role-playing, and
+context-aware responses. Research such as Generative Agents demonstrated that language-model-based
+agents can maintain memories, reflect on previous experiences, and use those memories to guide
+future behavior. Subsequent work has explored character-specific role-playing, LLM-driven NPC
+collaboration, contextualized NPC dialogue, and persistent memory for game characters.
+However, recent literature shows that important challenges remain in long-term consistency, memory
+management, narrative coherence, information control, and evaluation of LLM-driven game characters.
+A 2026 systematic mapping of 55 studies on AI-generated game dialogue identified memory limitations,
+repetitiveness, narrative incoherence, and latency as recurring technical problems, while also
+highlighting the need for stronger and more standardized evaluation methods.
+The proposed project addresses these challenges through a small interactive puzzle game consisting of
+multiple rooms, where each room contains an AI-driven NPC with a distinct personality, relationship
+state, knowledge set, and interaction strategy. The player must interact with these NPCs, establish
+sufficient trust or affinity, and obtain appropriate clues to progress through the game.
+A central challenge of the project is that NPCs should not possess identical knowledge. Information
+about previous rooms, player actions, character secrets, and puzzle clues must be selectively available
+according to its source, scope, relationship, and relevance. Therefore, the proposed system will
+maintain a centralized game-memory and knowledge repository while generating controlled, NPC-
+specific knowledge views.
+1.1.1 Motivation
+Traditional game NPCs commonly rely on fixed dialogue trees and predefined state transitions. Such
+systems provide strong narrative control but offer limited flexibility when players interact in unexpected
+ways.
+2
+
+--- Page 3 ---
+LLM-based NPCs provide more natural and open-ended interaction, but completely unrestricted
+generation can introduce new problems. NPCs may forget important events, reveal information they
+should not know, contradict earlier statements, or provide clues inconsistent with the actual game
+state. Recent user studies also show that greater openness does not automatically improve player
+experience; unconstrained LLM-NPC interaction can increase perceived autonomy while also increasing
+cognitive load and reducing usability or trust in some scenarios.
+The motivation of this project is therefore to explore a middle ground between:
+fixed scripted NPCs
+and
+unrestricted generative NPCs.
+The proposed game will provide NPCs with controlled autonomy, persistent memory, personality, and
+relationship-aware interaction while retaining deterministic control over important game facts and
+puzzle states.
+1.1.2 Project Objective
+The major objectives of the project are:
+1. To develop a multi-room puzzle game containing AI-driven NPCs with distinct personalities,
+goals, and interaction styles.
+2. To design a persistent memory system through which relevant events from earlier parts of the
+game can influence future NPC behavior.
+3. To develop a centralized knowledge repository containing game events, clues, relationships, NPC
+information, and world-state information.
+4. To implement hierarchical and access-controlled knowledge views so that each NPC receives only
+the information relevant to its role, knowledge scope, and relationship with the player.
+5. To develop an affinity/relationship mechanism through which NPC behavior and willingness to
+provide clues change according to player interactions.
+6. To ensure that AI-generated responses remain grounded in the canonical game state and do not
+arbitrarily modify puzzle state or reveal unauthorized information.
+7. To evaluate the proposed architecture against simpler NPC architectures using measures such as
+memory accuracy, information leakage, puzzle completion, consistency, player experience, and
+system efficiency.
+3
+
+--- Page 4 ---
+1.1.3 Scope of the Project
+The initial implementation will consist of approximately four to five interconnected rooms. Each room
+will contain one primary AI-driven NPC with a distinct personality and a different preferred method of
+establishing rapport with the player.
+The player will need to interact with the NPC to obtain information required for solving the room's
+puzzle and progressing to subsequent rooms. The amount and specificity of assistance provided by an
+NPC will depend on its relationship state with the player.
+The project will maintain a centralized canonical memory/knowledge store. Information stored in this
+repository will be associated with metadata such as source, timestamp, importance, visibility scope,
+relationship requirements, and game-state validity. NPCs will not receive the complete database
+directly; instead, the system will construct filtered knowledge views according to the NPC's authorized
+information.
+The scope of the initial implementation includes:
+• 4–5 game rooms
+• 4–5 primary NPCs
+• distinct NPC personalities
+• relationship/affinity management
+• event-based memory
+• hierarchical knowledge access
+• clue generation and controlled disclosure
+• persistent cross-room memory
+• canonical puzzle/game-state management
+• LLM-based NPC interaction
+• experimental evaluation
+Voice interaction, facial animation, large-scale NPC societies, real-time reinforcement learning, and
+large open-world environments are outside the scope of the initial prototype but may be explored as
+future extensions.
+1.2 Related Previous Work
+Research in AI-driven game characters has progressed from scripted dialogue systems to LLM-based
+agents capable of memory, planning, social interaction, and contextual dialogue.
+Generative Agents introduced an architecture in which agents maintain records of experiences,
+retrieve relevant memories, form higher-level reflections, and use those memories for planning and
+behavior. This work provides a major conceptual foundation for persistent interactive characters.
+Character-LLM explored character simulation using structured profiles, experiences, and emotional
+states instead of relying only on simple persona prompts. This demonstrates the importance of explicit
+character information for consistent role-playing.
+4
+
+--- Page 5 ---
+Research on LLM-driven NPC collaboration in Minecraft investigated how humans interact with
+GPT-4-driven NPCs during collaborative quests and identified limitations in language-only systems,
+particularly their lack of rich game-state and visual understanding.
+Recent work has also introduced contextualized generative AI for games, showing that grounding
+generated NPC dialogue within gameplay context can improve player presence, autonomy, and
+enjoyment.
+A 2026 systematic mapping of 55 studies on AI-generated game narrative and dialogue identified
+memory limitations, repetitiveness, narrative incoherence, latency, and weak standardization of
+evaluation as recurring issues.
+Research on information asymmetry in LLM-agent collaboration has examined situations in which
+agents possess different information and must communicate and verify information to solve tasks.
+These studies are particularly relevant to the proposed game's design, where different NPCs
+intentionally possess different pieces of information.
+Recent work on relationship-aware LLM architectures has also explored representing long-term
+relational states separately from immediate emotional responses, providing motivation for maintaining
+explicit relationship information rather than relying only on recent dialogue.
+The proposed project builds upon these research directions by combining them within a controlled
+puzzle-game environment and evaluating how memory organization and knowledge access affect NPC
+behavior, information disclosure, and puzzle-solving performance.
+1.3 Software and Hardware Requirements
+Software Requirements
+• Operating System: Windows / macOS / Linux
+• Game Engine: Unity
+• Programming Language: C#
+• Backend: Python
+• API Framework: FastAPI
+• Database: PostgreSQL
+• Vector/semantic retrieval: pgvector or equivalent retrieval layer
+• LLM API/model: suitable instruction-following language model with structured output/function-
+calling capability
+• Development Environment: Visual Studio Code / Visual Studio
+• Version Control: Git and GitHub
+• Optional tools: Docker, Postman
+Hardware Requirements
+• Processor: modern multi-core CPU
+• RAM: minimum 8 GB, preferably 16 GB
+• Storage: minimum 10 GB free space for development tools and project assets
+• GPU: optional for cloud/API-based LLM inference
+5
+
+--- Page 6 ---
+• Stable Internet connection for external LLM API usage
+1.4 Proposed Method
+The proposed development methodology will consist of the following stages.
+Step 1 — Game Environment Design
+A small puzzle-based game environment containing four to five interconnected rooms will be designed.
+Each room will contain one principal NPC, a puzzle, relevant objects, and progression clues.
+Step 2 — NPC Character Design
+Each NPC will be assigned:
+• personality traits
+• goals
+• background
+• preferred interaction style
+• relationship parameters
+• private information
+• room-specific knowledge
+• clue information
+The NPCs will intentionally differ in how they respond to player behavior.
+Step 3 — Centralized Knowledge and Memory Store
+A central repository will maintain canonical information about:
+• game state
+• player actions
+• NPC actions
+• important events
+• clues
+• relationships
+• discovered objects
+• room progress
+• NPC knowledge
+Each information item will include metadata such as scope, source, timestamp, importance, confidence,
+and access conditions.
+Step 4 — NPC Knowledge Views
+Rather than giving every NPC access to the full repository, the system will dynamically construct an
+NPC-specific context based on its allowed knowledge.
+6
+
+--- Page 7 ---
+For example:
+• public information may be available to all relevant NPCs;
+• personal information may remain private;
+• relationship-specific information may depend on trust or affiliation;
+• room-specific information may only be available to characters associated with that room;
+• selected high-level events may be propagated to future-room NPCs.
+Step 5 — Relationship and Affinity Management
+Player interactions will update an explicit relationship state for the NPC. Different NPCs will respond
+differently to actions such as helping, lying, solving puzzles, showing empathy, following rules, or
+attempting deception.
+Relationship state will influence the NPC's willingness to assist and the specificity of information it
+provides.
+Step 6 — LLM-Based Reasoning
+The LLM will receive:
+• current game state
+• relevant memories
+• permitted knowledge
+• NPC personality
+• relationship state
+• current player request
+The LLM will generate a structured response or action proposal.
+Step 7 — Validation Layer
+Generated actions will be checked against the canonical game state before execution. The LLM will not
+be allowed to directly modify important puzzle state or invent canonical game facts.
+Step 8 — Event Logging and Memory Update
+Important interactions will be converted into structured events and added to the central repository.
+Relevant events will update NPC memories, relationships, player-related beliefs, and future knowledge
+views.
+Step 9 — Experimental Evaluation
+The final system will be compared with simpler NPC configurations, such as:
+• scripted NPCs
+• LLM NPCs with persona only
+• LLM NPCs with flat conversational memory
+• the proposed hierarchical memory and knowledge-access architecture
+7
+
+--- Page 8 ---
+Performance will be measured using memory accuracy, clue leakage, personality consistency,
+relationship consistency, puzzle completion, interaction efficiency, player experience, latency, and
+computational cost.
+1.5 Deliverables
+The major deliverables of the project will include:
+1. A playable four-to-five-room puzzle game.
+2. Multiple AI-driven NPCs with distinct personalities and interaction styles.
+3. A persistent centralized game-memory and knowledge system.
+4. NPC-specific knowledge/access views.
+5. Relationship and affinity management.
+6. Event-based cross-room memory.
+7. LLM-based NPC dialogue and reasoning.
+8. Game-state and response validation mechanisms.
+9. Experimental benchmark scenarios and evaluation results.
+10. Project documentation and source code.
+11. Final project report and research-oriented analysis.
+Measures of Project Success
+The project will be considered successful if:
+• NPCs provide contextually appropriate responses;
+• important events remain available across rooms;
+• NPCs do not access unauthorized information;
+• NPC behavior changes appropriately with relationship state;
+• NPCs remain consistent with their assigned personalities;
+• clues remain consistent with canonical game state;
+• players can complete the game through interaction with NPCs;
+• the proposed architecture demonstrates measurable improvements over at least one simpler
+baseline.
+1.6 Stakeholders
+Primary Stakeholders
+• Project students and development team
+• Project guide
+• Department of Computer Science and Engineering
+• Faculty evaluators
+Secondary Stakeholders
+• Game developers
+• Researchers working on generative agents and game AI
+8
+
+--- Page 9 ---
+• Developers of AI-driven NPC systems
+• Players interested in interactive narrative games
+• Researchers in human-AI interaction and adaptive game systems
+The project may serve as a prototype for future systems involving interactive storytelling, educational
+simulations, serious games, virtual assistants, and persistent social agents.
+1.7 Gantt Chart
+Activity Aug–Sep Oct Nov Dec Jan Feb Mar
+Literature Review ✓ ✓
+Problem Definition & System Design ✓ ✓
+Game Environment Development ✓ ✓
+NPC Personality & Interaction Design ✓ ✓
+Central Memory/Knowledge System ✓ ✓
+Relationship & Affinity System ✓ ✓
+LLM Integration ✓ ✓
+Knowledge Access / Validation Layer ✓ ✓
+Game Integration & Testing ✓ ✓
+Baseline Implementations ✓ ✓
+Experimental Evaluation ✓ ✓
+Analysis & Documentation ✓ ✓
+Final Report / Presentation ✓
+1.8 References
+1. J. S. Park, J. O'Brien, C. Cai, M. R. Morris, P. Liang, and M. Bernstein, “Generative Agents:
+Interactive Simulacra of Human Behavior,” Proceedings of UIST 2023, 2023.
+2. Y. Shao, L. Li, J. Dai, and X. Qiu, “Character-LLM: A Trainable Agent for Role-Playing,” Proceedings
+of EMNLP 2023, pp. 13153–13187, 2023.
+3. S. Hu et al., “A Survey on Large Language Model-Based Game Agents,” ACM Computing Surveys,
+revised 2026.
+4. S. Rao et al., “Collaborative Quest Completion with LLM-driven Non-Player Characters in
+Minecraft,” 2024.
+9
+
+--- Page 10 ---
+5. J. Ma et al., “Designing and Evaluating Interactive Narratives with Generative AI: LLM-Driven
+NPCs for a Minecraft Murder Mystery,” Advances in Computational Intelligence Systems, 2026.
+6. M. Wevelsiep et al., “A Voice-Controlled Dialogue System for NPC Interaction using Large
+Language Models,” Proceedings of the 15th International Workshop on Spoken Dialogue Systems
+Technology, 2025.
+7. R. Peng et al., “Communication and Verification in LLM Agents towards Collaboration under
+Information Asymmetry,” 2025.
+8. J. Starace and T. Soule, “Modeling Player Types with LLMs: A Framework for Belief- and
+Motivation-Driven NPC Behavior,” Serious Games, Springer, 2026.
+9. F. A. Damastuti et al., “Hierarchical Memory Consolidation and Context-Efficient Retrieval for
+Persistent Personality in LLM-Based Game NPCs,” 2026.
+10. T.-C. Hsu et al., “The Double-Edged Sword of Open-Ended Interaction: How LLM-Driven NPCs
+Affect Players' Cognitive Load and Gaming Experience,” 2026.
+11. “Narrative and dialogue generation for video-games: A systematic mapping,” Engineering
+Applications of Artificial Intelligence, vol. 178, 2026.
+10

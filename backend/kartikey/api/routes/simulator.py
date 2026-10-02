@@ -28,7 +28,7 @@ from shared.models import (
     SimulationScenario,
 )
 from shared.utils import get_logger, utcnow
-from kartikey.api.routes.analyses import _analyses  # Shared in-memory store
+from kartikey.api.routes.analyses import repository
 from kartikey.orchestration.knowledge_registry import get_registry
 
 logger = get_logger(__name__)
@@ -53,7 +53,7 @@ async def run_simulation(
     This is highly valuable for procurement officers to justify their decisions
     (e.g., rejecting a supplier's request to relax a requirement because it violates a QCO).
     """
-    analysis = _analyses.get(analysis_id)
+    analysis = await repository.get(analysis_id)
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
         
@@ -130,11 +130,14 @@ async def run_simulation(
         retrieved_stds = [c.standard for c in result.candidates]
         
         # 3. Analyze with AI
+        # Everything retrieved here was retrieved for sim_req, so it is exactly
+        # that requirement's candidate set.
         aiml_req = AimlRequest(
             analysis_id=analysis_id,
             extracted_text=analysis.raw_text or "",
             requirements=[sim_req],
             retrieved_standards=retrieved_stds,
+            requirement_candidates={sim_req.id: retrieved_stds},
         )
         
         try:
@@ -155,6 +158,7 @@ async def run_simulation(
                 aiml_response=aiml_resp,
                 standards_lookup=standards_lookup,
                 evidence_lookup=evidence_lookup,
+                requirement_candidates={sim_req.id: [s.id for s in retrieved_stds]},
             )
             
             scenario.affected_findings = sim_findings

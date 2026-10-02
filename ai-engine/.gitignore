@@ -1,0 +1,6 @@
+.env
+.env
+
+# Model artifacts (large binaries — tracked via Git LFS or separate deploy step)
+*.joblib
+*.json

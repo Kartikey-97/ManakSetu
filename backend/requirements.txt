@@ -20,11 +20,10 @@ pgvector>=0.3.0
 
 # Optional semantic retrieval runtime (the application degrades to lexical
 # retrieval when these or their model assets are unavailable)
-qdrant-client>=1.9.0
-sentence-transformers>=3.0.0
+qdrant-client>=1.7.0
 
 # Document processing
-pdfplumber>=0.11.0           # PDF text extraction (better than PyPDF2 for structured docs)
+PyMuPDF>=1.24.0              # Fast PDF text extraction with excellent Unicode/Hindi support
 python-docx>=1.1.0           # DOCX extraction
 
 # HTTP client — for source adapters calling external APIs/portals
@@ -37,3 +36,5 @@ python-dotenv>=1.0.0
 # Test runner
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+reportlab==5.0.1
+uharfbuzz>=0.56.0,<1.0.0

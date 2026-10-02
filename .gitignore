@@ -97,3 +97,88 @@ code_base.txt
 # Ensure .env everywhere is ignored
 **/.env
 **/.env.local
+
+# -------------------------------------------------------
+# Temporary scripts, dumps, and testing artifacts
+# -------------------------------------------------------
+/*.txt
+/*.json
+/*.joblib
+/*.patch
+/*.sh
+/*.md
+!README.md
+/test_*.py
+/patch_*.py
+/search_catalog*.py
+/quick_test.py
+/fix_training_data.py
+/export_history.py
+/get_reqs.py
+/parse_*.py
+/smoke_test_*.py
+/confidence.py
+/evidence.py
+/issue_detector.py
+/ranking.py
+/recommender.py
+/requirement_analysis.py
+/bis_live_ingestion_patch_final/
+/tatus
+/*.bak
+**/*.bak
+/patch.py
+backend/test_webhook*.py
+backend/test_http_e2e.py
+backend/dump_demo_output.py
+backend/check_models.py
+
+# Additional rules
+.venv*
+*.npy
+backend/uploads/
+backend/:memory:*
+
+# -------------------------------------------------------
+# Local test/debug scratch files (keep local, don't commit)
+# -------------------------------------------------------
+test_qdrant.py
+patch_test.py
+test_config.py
+test_timeout.py
+test_local_qdrant.py
+test_registry.py
+patch_local_qdrant.py
+data/qdrant_local/
+
+backend/data/
+data/
+*.pdf
+*.pyc
+*debug*.py
+*test_*.py
+fix_*.py
+*patch*.js
+__pycache__/
+
+# -------------------------------------------------------
+# Root-level dev/debug scripts — untracked 2026-10-02
+# Files kept locally but removed from git. Won't re-appear on git add.
+# -------------------------------------------------------
+/apply_patch.py
+/verify_patch.py
+/check.py
+/diagnostic.py
+/dump_codebase.py
+/generate_codebase.py
+/make_full_req.py
+/modify_relationships.py
+/revert_auth.py
+/profile_batch.py
+/profile_details.py
+/profile_ml.py
+/test_norm.js
+/test_regex.js
+/n8n_integration.md
+/retrieval_evaluation_report.md
+/start_sh.pid

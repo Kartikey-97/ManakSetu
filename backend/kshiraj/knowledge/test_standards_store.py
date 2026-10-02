@@ -411,3 +411,121 @@ class TestThreadSafety:
 
         assert errors == [], f"Unexpected errors during concurrent add: {errors}"
         assert store.count() == 50
+
+
+# ---------------------------------------------------------------------------
+# Family (part-stripped) resolution
+# ---------------------------------------------------------------------------
+
+
+class TestFamilyResolution:
+    """
+    BIS publishes many standards only as parts. There is no document numbered
+    plain "IS 10322" — only "IS 10322 : Part 1", "IS 10322 : Part 5 : Sec 3" and
+    so on. Tenders and normative-reference lists nevertheless cite the family
+    ("shall conform to IS 10322"), so exact-key lookup alone returned nothing for
+    a perfectly valid citation and the requirement lost its candidate standard.
+
+    The exact key still wins wherever it hits, so nothing that resolved before
+    resolves differently now.
+    """
+
+    def test_family_citation_resolves_to_every_part(self, store: StandardsStore) -> None:
+        for part in ("IS 10322 : Part 1", "IS 10322 : Part 5 : Sec 3",
+                     "IS 10322 : Part 5 : Sec 5"):
+            store.add(_make_standard(is_number=part))
+
+        results = store.get_by_is_number("IS 10322")
+
+        assert {s.is_number for s in results} == {
+            "IS 10322 : Part 1", "IS 10322 : Part 5 : Sec 3", "IS 10322 : Part 5 : Sec 5",
+        }
+
+    def test_an_exact_match_is_never_widened(self, store: StandardsStore) -> None:
+        """
+        The distinction that matters: a tender citing IS 694 wants IS 694, not
+        every standard whose number starts with 694.
+        """
+        store.add(_make_standard(is_number="IS 694"))
+        store.add(_make_standard(is_number="IS 694 : Part 1"))
+
+        results = store.get_by_is_number("IS 694")
+
+        assert [s.is_number for s in results] == ["IS 694"]
+
+    def test_a_part_citation_stays_a_part_citation(self, store: StandardsStore) -> None:
+        store.add(_make_standard(is_number="IS 7098 : Part 1"))
+        store.add(_make_standard(is_number="IS 7098 : Part 2"))
+
+        results = store.get_by_is_number("IS 7098 : Part 2")
+
+        assert [s.is_number for s in results] == ["IS 7098 : Part 2"]
+
+    def test_neighbouring_numbers_do_not_collide(self, store: StandardsStore) -> None:
+        """
+        The failure mode a prefix match would have: IS 1554 and IS 15544 are
+        unrelated standards, and IS 15544 must not answer a query for IS 1554.
+        """
+        store.add(_make_standard(is_number="IS 1554 : Part 1"))
+        store.add(_make_standard(is_number="IS 15544"))
+
+        assert [s.is_number for s in store.get_by_is_number("IS 1554")] == [
+            "IS 1554 : Part 1"
+        ]
+        assert [s.is_number for s in store.get_by_is_number("IS 15544")] == ["IS 15544"]
+
+    @pytest.mark.parametrize(
+        "cited",
+        [
+            "IS 10322 : Part 5 : Sec 3",
+            "IS 10322 (Part 5/Sec 3)",
+            "IS 10322: Part 5: Sec 3",
+            "is 10322 : part 5 : sec 3",
+        ],
+    )
+    def test_part_separator_styles_all_reduce_to_the_family(
+        self, store: StandardsStore, cited: str,
+    ) -> None:
+        """The sources are not consistent about spacing or brackets."""
+        store.add(_make_standard(is_number="IS 10322 : Part 1"))
+
+        assert store.get_by_is_number(cited)[0].is_number == "IS 10322 : Part 1"
+
+    def test_an_absent_standard_is_still_absent(self, store: StandardsStore) -> None:
+        """
+        Widening must not manufacture a hit. IS 8130 is genuinely not in the
+        catalogue, and reporting a near-miss as a match would be worse than
+        reporting nothing.
+        """
+        store.add(_make_standard(is_number="IS 1554 : Part 1"))
+
+        assert store.get_by_is_number("IS 8130") == []
+
+    def test_get_family_always_widens(self, store: StandardsStore) -> None:
+        store.add(_make_standard(is_number="IS 10322 : Part 1"))
+        store.add(_make_standard(is_number="IS 10322 : Part 5 : Sec 3"))
+
+        family = store.get_family("IS 10322 : Part 1")
+
+        assert len(family) == 2
+
+    def test_the_family_index_survives_upsert(self, store: StandardsStore) -> None:
+        std = _make_standard(is_number="IS 10322 : Part 1")
+        store.add(std)
+        store.upsert(std.model_copy(update={"is_number": "IS 16107"}))
+
+        assert store.get_by_is_number("IS 10322") == []
+        assert [s.is_number for s in store.get_by_is_number("IS 16107")] == ["IS 16107"]
+
+    def test_the_family_index_survives_remove(self, store: StandardsStore) -> None:
+        std = _make_standard(is_number="IS 10322 : Part 1")
+        store.add(std)
+        store.remove(std.id)
+
+        assert store.get_by_is_number("IS 10322") == []
+
+    def test_the_family_index_survives_clear(self, store: StandardsStore) -> None:
+        store.add(_make_standard(is_number="IS 10322 : Part 1"))
+        store.clear()
+
+        assert store.get_by_is_number("IS 10322") == []

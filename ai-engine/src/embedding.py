@@ -1,58 +1,61 @@
 """
 ai-engine/src/embedding.py
 
-Generates and normalizes sentence embeddings using SentenceTransformers.
-
-Key fix: embeddings are L2-normalized before returning so that inner-product
-search (IndexFlatIP in FAISS) is equivalent to cosine similarity. This means
-similarity scores are true cosine similarities in [0, 1] rather than the
-broken `1 - dist/2` approximation.
+Embedding generation via Google Gemini text-embedding-004.
+Zero RAM on Render — no model loaded into process memory.
+Free within Gemini API limits (1500 RPM on free tier).
+768-dimensional output (better than 384-dim local models).
 """
+from __future__ import annotations
 
+import os
+import time
 import logging
-import numpy as np
-from sentence_transformers import SentenceTransformer
+from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
-_MODEL_NAME = "all-MiniLM-L6-v2"
-_model = None
+EMBEDDING_DIM = 3072
+_GEMINI_MODEL = "gemini-embedding-001"
 
 
-def _get_model():
-    global _model
-    if _model is None:
-        logger.info("Loading SentenceTransformer model '%s'...", _MODEL_NAME)
-        _model = SentenceTransformer(_MODEL_NAME)
-    return _model
-
-
-def generate_embeddings(text):
+def get_embedding(text: str, task_type: str = "RETRIEVAL_DOCUMENT") -> list[float]:
     """
-    Generate L2-normalised embeddings for the given text(s).
-
-    Returns
-    -------
-    np.ndarray
-        - 1-D array of shape (dim,) when text is a str
-        - 2-D array of shape (n, dim) when text is a list
-
-    Because the returned vectors are unit-norm, inner product == cosine similarity.
+    Get a single embedding. Raises RuntimeError if GOOGLE_API_KEY not set.
+    Retries 3 times with exponential backoff.
     """
-    model = _get_model()
-    single = isinstance(text, str)
-    inputs = [text] if single else text
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        raise RuntimeError("GOOGLE_API_KEY not set")
 
-    raw = model.encode(inputs, convert_to_numpy=True, show_progress_bar=False)
+    import google.genai as genai
+    client = genai.Client(api_key=api_key)
+    text = text[:8000]  # Safe truncation
 
-    # L2-normalise so inner product becomes cosine similarity
-    norms = np.linalg.norm(raw, axis=1, keepdims=True)
-    norms = np.where(norms == 0, 1.0, norms)   # avoid division by zero
-    normalised = (raw / norms).astype("float32")
+    for attempt in range(3):
+        try:
+            result = client.models.embed_content(
+                model=_GEMINI_MODEL,
+                contents=text,
+                config={"task_type": task_type},
+            )
+            return result.embeddings[0].values
+        except Exception as exc:
+            if attempt == 2:
+                raise RuntimeError(f"Gemini embedding failed: {exc}") from exc
+            time.sleep(1.0 * (attempt + 1))
+    raise RuntimeError("Unreachable")
 
-    return normalised[0] if single else normalised
 
-
-def embedding_dim():
-    """Return the embedding dimension of the loaded model."""
-    return _get_model().get_sentence_embedding_dimension()
+def get_embeddings_batch(
+    texts: Sequence[str],
+    task_type: str = "RETRIEVAL_DOCUMENT",
+) -> list[list[float]]:
+    """Batch embedding with rate-limiting. Logs progress every 10 items."""
+    result = []
+    for i, text in enumerate(texts):
+        result.append(get_embedding(text, task_type=task_type))
+        if i > 0 and i % 10 == 0:
+            time.sleep(0.5)
+            logger.info("Embedded %d/%d", i, len(texts))
+    return result

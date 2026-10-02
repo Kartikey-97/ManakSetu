@@ -174,6 +174,7 @@ _W_DESIGNATION_EXACT = 10.0
 _W_IS_NUMBER_TOKEN = 5.0
 _W_TITLE_TOKEN = 3.0
 _W_SCOPE_TOKEN = 1.5
+_W_KEYWORD_TOKEN = 2.0
 _W_COMMITTEE_TOKEN = 1.0
 _W_COUNCIL_TOKEN = 1.0
 
@@ -380,6 +381,16 @@ class RetrievalService:
         if common:
             score += _W_SCOPE_TOKEN * len(common)
             matched.update(common)
+
+        # --- Keyword token overlap ---
+        if hasattr(std, 'keywords') and std.keywords:
+            kw_tokens = set()
+            for kw in std.keywords:
+                kw_tokens.update(_text_tokens(kw))
+            common = query_tokens & kw_tokens
+            if common:
+                score += _W_KEYWORD_TOKEN * len(common)
+                matched.update(common)
 
         # --- Technical committee token overlap ---
         comm_tokens = _text_tokens(std.technical_committee)

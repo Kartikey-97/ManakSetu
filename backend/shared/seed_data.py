@@ -9,7 +9,7 @@ Purpose:
   without requiring a live BIS database connection.
 
   This is NOT mock data — all IS numbers, years, statuses, and QCO details
-  are sourced from the actual BIS portal (standardsbis.gov.in) and official
+  are sourced from the actual BIS portal (standards.bis.gov.in) and official
   gazette notifications. Treat these as authoritative within the MVP.
 
 Standards included (LED street lighting vertical slice + commonly cited):
@@ -58,7 +58,6 @@ def get_seed_standards() -> list[Standard]:
     """Return the list of real BIS standards for the MVP demo."""
     return [
         _is_10322_part5_sec3(),
-        _is_16107(),
         _is_15885_part2_sec1(),
         _is_2062(),
         _is_694(),
@@ -109,7 +108,7 @@ def _is_10322_part5_sec3() -> Standard:
         technical_committee="LITD 1",
         division_council="Electrotechnical Division Council",
         ics_code="29.140.40",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=True,
         qco_issuing_ministry="DPIIT (Department for Promotion of Industry and Internal Trade)",
         qco_effective_date=date(2023, 3, 1),
@@ -126,34 +125,6 @@ def _is_10322_part5_sec3() -> Standard:
                 ),
             ),
         ],
-        retrieved_at=_SEED_RETRIEVED_AT,
-    )
-
-
-# ===========================================================================
-# IS 16107 — LED luminaires for road/street lighting (newer standard)
-# ===========================================================================
-
-def _is_16107() -> Standard:
-    """
-    IS 16107: LED Luminaires for Road and Street Lighting.
-    A newer, more specific standard for LED luminaires that works alongside IS 10322.
-    """
-    return Standard(
-        is_number="IS 16107",
-        year=2023,
-        title="LED Luminaires for Road and Street Lighting — Performance Requirements",
-        scope=(
-            "Specifies performance requirements for complete LED luminaires used "
-            "for road and street lighting applications. Covers luminous efficacy, "
-            "color quality (CCT, CRI, Ra), IP rating, and IK rating."
-        ),
-        status=StandardStatus.ACTIVE,
-        technical_committee="LITD 1",
-        division_council="Electrotechnical Division Council",
-        ics_code="29.140.40",
-        source_url="https://standardsbis.gov.in",
-        qco_notified=False,
         retrieved_at=_SEED_RETRIEVED_AT,
     )
 
@@ -189,7 +160,7 @@ def _is_15885_part2_sec1() -> Standard:
         technical_committee="LITD 5",
         division_council="Electrotechnical Division Council",
         ics_code="29.140.30",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=True,
         qco_issuing_ministry="MeitY (Ministry of Electronics and Information Technology)",
         qco_effective_date=date(2022, 1, 1),
@@ -227,7 +198,7 @@ def _is_2062() -> Standard:
         technical_committee="MTD 4",
         division_council="Metallurgical Engineering Division Council",
         ics_code="77.140.70",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=True,
         qco_issuing_ministry="Ministry of Steel",
         qco_effective_date=date(2018, 9, 5),
@@ -271,7 +242,7 @@ def _is_694() -> Standard:
         technical_committee="ETDC 20",
         division_council="Electrotechnical Division Council",
         ics_code="29.060.20",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=True,
         qco_issuing_ministry="DPIIT (Department for Promotion of Industry and Internal Trade)",
         qco_effective_date=date(2017, 3, 1),
@@ -300,7 +271,7 @@ def _is_1255() -> Standard:
         technical_committee="ETDC 20",
         division_council="Electrotechnical Division Council",
         ics_code="29.060.20",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=False,
         retrieved_at=_SEED_RETRIEVED_AT,
     )
@@ -361,7 +332,7 @@ def _is_456() -> Standard:
         technical_committee="CED 2",
         division_council="Civil Engineering Division Council",
         ics_code="91.100.30",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=False,
         retrieved_at=_SEED_RETRIEVED_AT,
     )
@@ -383,7 +354,7 @@ def _is_800() -> Standard:
         technical_committee="CED 7",
         division_council="Civil Engineering Division Council",
         ics_code="91.080.10",
-        source_url="https://standardsbis.gov.in",
+        source_url="https://standards.bis.gov.in",
         qco_notified=False,
         retrieved_at=_SEED_RETRIEVED_AT,
     )

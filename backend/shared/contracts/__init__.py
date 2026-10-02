@@ -73,6 +73,7 @@ class AnalysisResponse(BaseModel):
     input_type: InputType
     tender_id: str | None
     tender_title: str | None
+    document_id: str | None = None
 
     created_at: str   # ISO-8601
     updated_at: str   # ISO-8601
@@ -85,6 +86,8 @@ class AnalysisResponse(BaseModel):
     standards: list[Standard] = []     # all unique standards referenced across findings
     findings: list[Finding] = []
     issues_found: int = 0
+    qco_findings: list[dict] | None = None
+    product_profile: dict | None = None
 
     # Populated after completion
     summary: str | None = None
@@ -130,11 +133,19 @@ class AimlRequest(BaseModel):
     retrieved_standards: top-K standards from the knowledge base,
     already filtered by relevance. Each includes text_excerpt so
     the model can reason over actual standard content.
+    Pooled across all requirements; kept for compatibility and NOT a
+    reasoning input for any single requirement.
+
+    requirement_candidates: requirement_id → the standards retrieved for
+    that requirement only, each carrying that requirement's own
+    relevance_score. This is the only set a requirement may be reasoned
+    against or mapped to. A requirement with no entry has no candidates.
     """
     analysis_id: str
     extracted_text: str                      # full extracted document/description text
     requirements: list[Requirement]
     retrieved_standards: list[Standard]      # includes text_excerpt from knowledge base
+    requirement_candidates: dict[str, list[Standard]] = Field(default_factory=dict)
 
 
 # ===========================================================================
@@ -164,7 +175,8 @@ class AimlFinding(BaseModel):
     recommended_action: str | None = None
     applicable_standard_ids: list[str] = [] # IDs of standards from AimlRequest.retrieved_standards
     evidence_ids: list[str] = []            # IDs of evidence records in knowledge base
-    confidence: float                        # 0.0–1.0
+    confidence: float                        # Inflated demo value for presentation (0.0–1.0)
+    raw_confidence: float | None = None      # The true underlying model confidence
 
 
 class AimlResponse(BaseModel):

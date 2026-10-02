@@ -1,18 +1,47 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-const API_ROOT = API_BASE + '/api/v1';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+export const API_ROOT = API_BASE + '/api/v1';
+
+export const API_KEY = import.meta.env.VITE_STANDIQ_API_KEY || 'sk_standiq_dev_26108';
 
 // The backend exposes /health at the root, outside the /api/v1 prefix.
 export async function getBackendHealth() {
-  const response = await fetch(`${API_BASE}/health`);
-  if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
-  return response.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000); // fail fast after 10s
+  try {
+    const response = await fetch(`${API_BASE}/health`, {
+      signal: controller.signal,
+      headers: { 'X-API-Key': API_KEY }
+    });
+    if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('Not JSON'); }
+    if (data.status !== 'ok') throw new Error(`Not healthy: ${data.status}`);
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_ROOT}${path}`, options);
+  const headers = {
+    'X-API-Key': API_KEY,
+    ...(options.headers || {})
+  };
+  
+  const response = await fetch(`${API_ROOT}${path}`, { ...options, headers });
   if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`API ${response.status}: ${body || response.statusText}`);
+    let message = response.statusText;
+    try {
+      const body = await response.json();
+      // FastAPI puts structured errors in detail; pick the most readable field
+      message = body?.detail?.message || body?.message || body?.detail || JSON.stringify(body);
+    } catch {
+      message = await response.text().catch(() => response.statusText);
+    }
+    const err = new Error(message);
+    err.status = response.status;
+    throw err;
   }
   return response.json();
 }
@@ -182,7 +211,7 @@ export function toUiAnalysis(payload) {
     };
   }
 
-  const requirements = (payload.extracted_requirements || []).map((requirement) => ({
+  const requirements = (payload.extracted_requirements || payload.requirements || []).map((requirement) => ({
     ...requirement,
     type: requirement.type || requirement.category || 'General',
     specifiedValue: requirement.specifiedValue || requirement.specified_value || '',
@@ -191,10 +220,11 @@ export function toUiAnalysis(payload) {
     confidence: requirement.confidence ?? requirement.evidence_chain?.confidence ?? 0,
   }));
 
-  const standards = (payload.standards_intelligence || []).map((standard, index) => ({
+  const backendStandards = payload.standards_intelligence || payload.standards || [];
+  const standards = backendStandards.map((standard, index) => ({
     ...standard,
     rank: standard.rank ?? index + 1,
-    standardCode: standard.standardCode || standard.code || 'Unknown standard',
+    standardCode: standard.standardCode || standard.code || standard.designation || 'Unknown standard',
     standardTitle: standard.standardTitle || standard.title || '',
     statusBadge: standard.statusBadge || standard.status_badge || standard.status || 'UNKNOWN',
     isQcoMandatory: standard.isQcoMandatory ?? standard.is_qco_mandatory ?? false,
@@ -260,11 +290,15 @@ export async function uploadDocument(file) {
   return request('/documents/upload', { method: 'POST', body: form });
 }
 
-export async function createAnalysis({ text, file, category, department, tenderTitle }) {
+export async function createAnalysis({ text, file, document_id, category, department, tenderTitle }) {
   let body;
-  if (file) {
-    const document = await uploadDocument(file);
-    body = { input_type: 'document', document_id: document.document_id, tender_title: tenderTitle, metadata: { category, department } };
+  if (document_id || file) {
+    let finalDocId = document_id;
+    if (!finalDocId && file) {
+      const document = await uploadDocument(file);
+      finalDocId = document.document_id;
+    }
+    body = { input_type: 'document', document_id: finalDocId, tender_title: tenderTitle, metadata: { category, department } };
   } else {
     body = { input_type: 'text', text, tender_title: tenderTitle, metadata: { category, department } };
   }
@@ -293,4 +327,42 @@ export async function waitForAnalysis(id, onProgress, timeoutMs = 60000) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   throw new Error('Analysis is taking longer than expected. Check History for its current status.');
+}
+
+export async function extractProfilePreview({ text, file, category }) {
+  if (!API_KEY) throw new Error('Demo environment requires an API Key');
+  
+  let document_id = undefined;
+  if (file) {
+    const document = await uploadDocument(file);
+    document_id = document.document_id;
+  }
+  
+  const profileData = await request('/analyses/extract-profile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: file ? undefined : text,
+      document_id,
+      category
+    })
+  });
+  
+  return { ...profileData, document_id };
+}
+
+export async function patchFindingDecision(analysisId, findingId, decision) {
+  return request(`/analyses/${analysisId}/findings/${findingId}/decision`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision })
+  });
+}
+
+export async function patchStandardDecision(analysisId, standardId, decision) {
+  return request(`/analyses/${analysisId}/standards/${standardId}/decision`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision })
+  });
 }

@@ -172,6 +172,7 @@ class HybridRetrievalService:
 
         # 2. Execute Vector Semantic Retrieval (with fallback safety)
         vector_hits: List[Dict[str, Any]] = []
+        vector_search_failed = False
         try:
             query_vec = self.embedding_service.encode_text(q_text)
             st_filter = rq.status_filter[0] if rq.status_filter and len(rq.status_filter) == 1 else None
@@ -187,8 +188,19 @@ class HybridRetrievalService:
         for hit in vector_hits:
             std_id = hit.get("id")
             score = hit.get("score", 0.0)
+            payload = hit.get("payload", {}) or {}
+            is_num = payload.get("is_number") or payload.get("normalized_is_number")
+
+            std_obj = None
             if std_id:
-                vector_scores_by_id[std_id] = float(score)
+                std_obj = self.standards_store.get_by_id(std_id)
+            if std_obj is None and is_num:
+                matches = self.standards_store.get_by_is_number(is_num)
+                if matches:
+                    std_obj = matches[0]
+
+            if std_obj:
+                vector_scores_by_id[std_obj.id] = float(score)
 
         # Collect union of candidate standard IDs
         all_candidate_ids = set(lex_candidates_by_id.keys()).union(set(vector_scores_by_id.keys()))
@@ -214,7 +226,18 @@ class HybridRetrievalService:
             norm_vec = min(1.0, max(0.0, (raw_vec + 1.0) / 2.0)) if raw_vec != 0.0 else 0.0
 
             # Fused score
-            final_score = (self.lexical_weight * norm_lex) + (self.vector_weight * norm_vec)
+            if len(vector_hits) == 0:
+                final_score = norm_lex
+                cutoff = 0.20
+            else:
+                final_score = (self.lexical_weight * norm_lex) + (self.vector_weight * norm_vec)
+                cutoff = 0.35
+
+            # Minimum similarity threshold to drop noise (e.g., out-of-domain queries 
+            # dragging in the "least bad" candidates). Genuine matches typically score > 0.70.
+            logger.info(f"Hybrid retrieval candidate: {std_obj.is_number} with final_score={final_score}, norm_vec={norm_vec}")
+            if final_score < cutoff:
+                continue
 
             matched_terms = lex_candidate.matched_terms if lex_candidate else []
             ev_list = lex_candidate.evidence if lex_candidate else []
@@ -222,6 +245,8 @@ class HybridRetrievalService:
             # Populate relevance_score on Standard copy
             std_copy = std_obj.model_copy()
             std_copy.relevance_score = round(final_score, 4)
+            std_copy.semantic_score = round(norm_vec, 4)
+
 
             candidate = CandidateStandard(
                 standard=std_copy,

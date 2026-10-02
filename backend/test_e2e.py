@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from shared.models import Analysis, InputType, Standard, StandardStatus
-from kartikey.api.routes.analyses import _analyses
 from kartikey.orchestration.pipeline import run_analysis_pipeline
 from kartikey.orchestration.knowledge_registry import initialize_knowledge_registry
 
@@ -42,16 +41,19 @@ async def test_e2e():
         raw_text=tender_text,
         status="queued"
     )
-    _analyses[analysis.id] = analysis
-    
+    # A local store, not the API's. This exercises the pipeline directly, so it
+    # has no business writing into the route module's state — and since the routes
+    # now read from SQLite, borrowing their dict would not have worked anyway.
+    store = {analysis.id: analysis}
+
     print("\n[+] Starting AI Pipeline (Extract -> Retrieve -> Analyze -> Enrich)")
     print(f"    Input Text: '{tender_text}'")
-    
+
     # 3. Run Pipeline
-    await run_analysis_pipeline(analysis.id, _analyses)
-    
+    await run_analysis_pipeline(analysis.id, store)
+
     # 4. Show Results
-    completed_analysis = _analyses[analysis.id]
+    completed_analysis = store[analysis.id]
     print(f"\n[+] Pipeline Finished! Status: {completed_analysis.status.value}")
     
     print("\n[+] EXTRACTED REQUIREMENTS:")

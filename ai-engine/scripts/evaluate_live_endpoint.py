@@ -36,7 +36,11 @@ def main():
         
         # Build Request
         payload = json.dumps({"query": query_text, "top_k": 10}).encode('utf-8')
-        req = urllib.request.Request(endpoint, data=payload, headers={'Content-Type': 'application/json'})
+        headers = {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        req = urllib.request.Request(endpoint, data=payload, headers=headers)
         
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
@@ -74,9 +78,11 @@ def main():
                 })
                 
         except urllib.error.HTTPError as e:
-            print(f"[{i+1}/{len(queries)}] ❌ Query: '{query_text}' | HTTPError: {e.code} - {e.read().decode('utf-8')}")
+            print(f"[{i+1}/{len(queries)}] ❌ Query: '{query_text}' | HTTPError: {e.code} - {e.read().decode('utf-8')[:50]}...")
         except Exception as e:
             print(f"[{i+1}/{len(queries)}] ❌ Query: '{query_text}' | Error: {e}")
+            
+        time.sleep(2.5)
             
     duration = time.time() - start_time
     num_queries = len(queries)

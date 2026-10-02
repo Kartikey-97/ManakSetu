@@ -25,9 +25,9 @@ from kshiraj.knowledge.vector_store import VectorStore
 @pytest.fixture
 def mock_embedding_service():
     service = MagicMock()
-    service.dimension = 384
-    service.encode_text.return_value = [0.15] * 384
-    service.encode_batch.side_effect = lambda texts: [[0.1 * (i + 1)] * 384 for i in range(len(texts))]
+    service.dimension = 3072
+    service.encode_text.return_value = [0.15] * 3072
+    service.encode_batch.side_effect = lambda texts: [[0.1 * (i + 1)] * 3072 for i in range(len(texts))]
     return service
 
 
@@ -153,7 +153,7 @@ class TestRealisticSemanticRetrievalAndFallback:
         std_store.add(cable_std)
 
         mock_embedding = MagicMock()
-        mock_embedding.encode_text.return_value = [0.2] * 384
+        mock_embedding.encode_text.return_value = [0.2] * 3072
 
         mock_vec_store = MagicMock()
         mock_vec_store.search_standards.return_value = [
@@ -188,7 +188,7 @@ class TestRealisticSemanticRetrievalAndFallback:
         std_store.add(std)
 
         mock_embedding = MagicMock()
-        mock_embedding.encode_text.return_value = [0.1] * 384
+        mock_embedding.encode_text.return_value = [0.1] * 3072
 
         failing_vec_store = MagicMock()
         failing_vec_store.search_standards.side_effect = Exception("Qdrant connection refused: 6333 unreachable")

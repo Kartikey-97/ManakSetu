@@ -14,6 +14,7 @@ Responsibilities:
 
 from __future__ import annotations
 
+import re
 from typing import Iterable, List, Optional, Union
 
 import httpx
@@ -108,6 +109,15 @@ def adapt_retrieved_standards(
     return adapted
 
 
+def _is_base(designation: str) -> str:
+    """
+    Base IS number for comparison: whitespace-free, casefolded, and cut at the
+    first part/year separator — "IS 1554 : Part 1" and "IS 1554:1988" both give
+    "is1554", while "IS 15544" stays distinct (a substring test matched it).
+    """
+    return re.split(r"[:(]", re.sub(r"\s+", "", designation).casefold())[0]
+
+
 # ===========================================================================
 # AI/ML Client
 # ===========================================================================
@@ -197,21 +207,19 @@ class AimlClient:
         )
 
         findings: List[AimlFinding] = []
-        retrieved_ids = [s.id for s in request.retrieved_standards]
 
         for idx, req in enumerate(request.requirements):
+            # Only this requirement's own candidates — never the pooled list.
+            candidates = request.requirement_candidates.get(req.id, [])
             matched_std_ids: List[str] = []
 
-            # Check if any retrieved standard matches cited IS reference
+            # The mock can only recognise an explicit citation. Anything else is
+            # left unmapped rather than assigned a candidate it cannot justify.
             if req.is_reference:
-                ref_lower = req.is_reference.strip().casefold()
-                for std in request.retrieved_standards:
-                    if ref_lower in std.is_number.strip().casefold():
-                        matched_std_ids.append(std.id)
-
-            if not matched_std_ids and retrieved_ids:
-                # Assign first candidate standard if available
-                matched_std_ids = [retrieved_ids[0]]
+                ref_base = _is_base(req.is_reference)
+                matched_std_ids = [
+                    std.id for std in candidates if _is_base(std.is_number) == ref_base
+                ]
 
             verdict_val = (
                 Verdict.JUSTIFIED.value
@@ -219,7 +227,7 @@ class AimlClient:
                 else Verdict.REQUIRES_HUMAN_VERIFICATION.value
             )
             reason_str = (
-                f"Mock analysis: requirement evaluated against {len(request.retrieved_standards)} candidate standard(s)."
+                f"Mock analysis: requirement evaluated against {len(candidates)} candidate standard(s)."
             )
             rec_action = (
                 "Verify standard compliance details."

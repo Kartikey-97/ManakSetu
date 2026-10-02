@@ -10,7 +10,12 @@
     "is_mandatory": true,
     "mandate_text": "All electrical wiring installations in commercial and residential buildings shall conform to IS 732:2019 and carry mandatory BIS ISI Mark (CM/L number). Non-compliant installations shall be prohibited from use in government-funded procurement.",
     "source_url": "https://bis.gov.in/qco/gazette/SO5147E_2023.pdf",
-    "products_covered": ["wiring harness", "cable trays", "conduit systems", "junction boxes"],
+    "products_covered": [
+      "wiring harness",
+      "cable trays",
+      "conduit systems",
+      "junction boxes"
+    ],
     "exemptions": "Low-voltage temporary installations below 50V AC are exempt."
   },
   {
@@ -24,7 +29,13 @@
     "is_mandatory": true,
     "mandate_text": "Medical electrical equipment imported or manufactured in India must comply with IS 13450:2024 (Part 1) for basic safety and essential performance. Mandatory BIS ISI certification required before commercial sale or procurement by government hospitals.",
     "source_url": "https://bis.gov.in/qco/gazette/SO2321E_2022.pdf",
-    "products_covered": ["patient monitors", "defibrillators", "ventilators", "infusion pumps", "diagnostic imaging equipment"],
+    "products_covered": [
+      "patient monitors",
+      "defibrillators",
+      "ventilators",
+      "infusion pumps",
+      "diagnostic imaging equipment"
+    ],
     "exemptions": "Equipment for personal research purposes is exempt pending separate notification."
   },
   {
@@ -38,7 +49,11 @@
     "is_mandatory": true,
     "mandate_text": "LED street lighting luminaires procured by municipal bodies, PWD, and smart city projects must mandatorily carry the BIS ISI Mark under IS 16107 (Part 2/Sec 2):2017. Procurement of non-certified luminaires is prohibited.",
     "source_url": "https://bis.gov.in/qco/gazette/SO4419E_2021.pdf",
-    "products_covered": ["LED street lights", "LED flood lights", "LED high mast lights"],
+    "products_covered": [
+      "LED street lights",
+      "LED flood lights",
+      "LED high mast lights"
+    ],
     "exemptions": "Prototype samples for testing purposes are exempt for a period of 6 months."
   },
   {
@@ -52,7 +67,12 @@
     "is_mandatory": true,
     "mandate_text": "All lamp controlgear including LED drivers, ballasts, and power supplies sold or procured in India must comply with IS 15885:2012 and carry a BIS CRS registration (R-number). Mandatory for all government tenders involving lighting infrastructure.",
     "source_url": "https://bis.gov.in/qco/gazette/SO6012E_2024.pdf",
-    "products_covered": ["LED drivers", "electronic ballasts", "magnetic ballasts", "LED power supply units"],
+    "products_covered": [
+      "LED drivers",
+      "electronic ballasts",
+      "magnetic ballasts",
+      "LED power supply units"
+    ],
     "exemptions": "Controlgear rated below 1W for decorative purposes only is exempt."
   },
   {
@@ -66,7 +86,11 @@
     "is_mandatory": true,
     "mandate_text": "Luminaires for general lighting purposes supplied to government procurement agencies must carry mandatory BIS ISI Mark under IS 10322 Part 5:2012. All tenders for office, institutional, and industrial lighting must reference this standard.",
     "source_url": "https://bis.gov.in/qco/gazette/SO3891E_2023.pdf",
-    "products_covered": ["indoor luminaires", "office lighting fixtures", "industrial lighting"],
+    "products_covered": [
+      "indoor luminaires",
+      "office lighting fixtures",
+      "industrial lighting"
+    ],
     "exemptions": "Decorative lighting and artistic fixtures are exempt."
   },
   {
@@ -80,7 +104,12 @@
     "is_mandatory": true,
     "mandate_text": "Hot rolled steel flat products including plates, sheets, and strips used in structural applications must comply with IS 2062 and carry BIS ISI Mark before use in government infrastructure projects.",
     "source_url": "https://bis.gov.in/qco/gazette/SO1204E_2019.pdf",
-    "products_covered": ["HR steel plates", "HR steel sheets", "HR steel strips", "structural steel"],
+    "products_covered": [
+      "HR steel plates",
+      "HR steel sheets",
+      "HR steel strips",
+      "structural steel"
+    ],
     "exemptions": "Steel used for artistic or decorative non-structural purposes is exempt."
   },
   {
@@ -94,7 +123,13 @@
     "is_mandatory": true,
     "mandate_text": "All threaded fasteners (bolts, nuts, screws, washers) used in government construction and infrastructure projects must conform to IS 1367 and carry BIS ISI certification. Non-certified fasteners are prohibited in safety-critical applications.",
     "source_url": "https://bis.gov.in/qco/gazette/SO7734E_2023.pdf",
-    "products_covered": ["hex bolts", "hex nuts", "socket head screws", "spring washers", "structural bolts"],
+    "products_covered": [
+      "hex bolts",
+      "hex nuts",
+      "socket head screws",
+      "spring washers",
+      "structural bolts"
+    ],
     "exemptions": "Fasteners below M3 size for electronic assemblies are exempt."
   },
   {
@@ -108,7 +143,11 @@
     "is_mandatory": true,
     "mandate_text": "All CPVC pipe fittings used in domestic water supply systems under Jal Jeevan Mission procurement must carry BIS ISI Mark under IS 14971. Mandatory for all Har Ghar Jal tenders.",
     "source_url": "https://bis.gov.in/qco/gazette/SO9002E_2024.pdf",
-    "products_covered": ["CPVC pipe fittings", "UPVC pipe fittings", "water supply connectors"],
+    "products_covered": [
+      "CPVC pipe fittings",
+      "UPVC pipe fittings",
+      "water supply connectors"
+    ],
     "exemptions": "Industrial and drainage fittings are covered under a separate notification."
   },
   {
@@ -122,7 +161,11 @@
     "is_mandatory": true,
     "mandate_text": "PVC insulated cables and wires for electricity supply used in government buildings, infrastructure, and grid projects must carry BIS ISI Mark under IS 1554. Procurement without certification is prohibited.",
     "source_url": "https://bis.gov.in/qco/gazette/SO5533E_2022.pdf",
-    "products_covered": ["PVC insulated cables", "armoured cables", "house wiring cables"],
+    "products_covered": [
+      "PVC insulated cables",
+      "armoured cables",
+      "house wiring cables"
+    ],
     "exemptions": "Temporary event wiring and testing cables are exempt."
   },
   {
@@ -136,7 +179,483 @@
     "is_mandatory": true,
     "mandate_text": "Steel tubes for structural purposes procured for use in government construction projects must conform to IS 9537 and carry mandatory BIS ISI Mark. Applicable to all PWD, CPWD, and Defence Estate projects.",
     "source_url": "https://bis.gov.in/qco/gazette/SO3310E_2021.pdf",
-    "products_covered": ["circular hollow sections", "rectangular hollow sections", "square hollow sections"],
+    "products_covered": [
+      "circular hollow sections",
+      "rectangular hollow sections",
+      "square hollow sections"
+    ],
     "exemptions": "Tubes for mechanical conveyance (fluids) are covered under separate IS standards."
+  },
+  {
+    "gazette_so_number": "S.O. 191(E)",
+    "is_number": "IS 269",
+    "notification_title": "Cement (Quality Control) Order, 2003",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2003-02-17",
+    "publication_date": "2003-02-17",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Ordinary Portland Cement (OPC) manufactured or imported for sale in India must conform to IS 269 and bear the BIS Standard Mark (ISI Mark) under the Cement (Quality Control) Order, 2003, which remains in force with no amendment to date.",
+    "source_url": "https://www.dpiit.gov.in/static/uploads/2025/07/4f486e0809f334f4fd15eec3e44a458b.pdf",
+    "products_covered": [
+      "OPC 33 grade",
+      "OPC 43 grade",
+      "OPC 53 grade"
+    ],
+    "exemptions": "Cement for export only, and cement held without a Standard Mark for up to 150 days under a Central Government permission pending grant of a regular licence, are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 191(E)",
+    "is_number": "IS 1489 (Part 1)",
+    "notification_title": "Cement (Quality Control) Order, 2003",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2003-02-17",
+    "publication_date": "2003-02-17",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Portland Pozzolana Cement (PPC), fly-ash based, manufactured or imported for sale in India must conform to IS 1489 (Part 1) and bear the BIS Standard Mark under the same Cement (Quality Control) Order, 2003 that covers OPC.",
+    "source_url": "https://www.eraglobal.co.in/ordinary-portland-cement/",
+    "products_covered": [
+      "PPC fly ash based"
+    ],
+    "exemptions": "Cement for export only, and cement held without a Standard Mark for up to 150 days under a Central Government permission pending grant of a regular licence, are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 574(E)",
+    "is_number": "IS 1786",
+    "notification_title": "Steel and Steel Products (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Steel",
+    "effective_date": "2024-02-05",
+    "publication_date": "2024-02-05",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "TMT reinforcement bars must conform to IS 1786 and bear the BIS Standard Mark under the Steel and Steel Products (Quality Control) Order, 2024.",
+    "source_url": "https://taxguru.in/corporate-law/steel-steel-products-quality-control-order-2024.html",
+    "products_covered": [
+      "TMT bars"
+    ],
+    "exemptions": "Export-only goods are exempt. Enforcement of several Schedule 1 line items was deferred by 1-3 years under the November 2025 Amendment Order \u2014 verify current line-item status before assuming full enforcement."
+  },
+  {
+    "gazette_so_number": "S.O. 574(E)",
+    "is_number": "IS 808",
+    "notification_title": "Steel and Steel Products (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Steel",
+    "effective_date": "2024-02-05",
+    "publication_date": "2024-02-05",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Hot rolled steel structural sections (I-sections, H-sections, channels, angles) must conform to IS 808 and bear the BIS Standard Mark under the Steel and Steel Products (Quality Control) Order, 2024.",
+    "source_url": "https://taxguru.in/corporate-law/steel-steel-products-quality-control-order-2024.html",
+    "products_covered": [
+      "I-sections",
+      "H-sections",
+      "channel sections",
+      "angle sections"
+    ],
+    "exemptions": "Export-only goods are exempt. Enforcement of several Schedule 1 line items was deferred by 1-3 years under the November 2025 Amendment Order \u2014 verify current line-item status before assuming full enforcement."
+  },
+  {
+    "gazette_so_number": "S.O. 189(E)",
+    "is_number": "IS 694",
+    "notification_title": "Electrical Wires, Cables, Appliances and Protection Devices and Accessories (Quality Control) Order, 2003",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2003-02-17",
+    "publication_date": "2003-02-17",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "PVC insulated cables for working voltages up to and including 1100V must conform to IS 694 and bear the BIS Standard Mark under this Order, which has been amended repeatedly since 2003 (e.g. the 2010 Amendment Order).",
+    "source_url": "https://www.eraglobal.co.in/switches-for-domestic-and-similar-purposes/",
+    "products_covered": [
+      "PVC insulated cables up to 1100V"
+    ],
+    "exemptions": "Export-only consignments may be exempt subject to Central Government approval; there is no blanket domestic exemption."
+  },
+  {
+    "gazette_so_number": "S.O. 189(E)",
+    "is_number": "IS 3854",
+    "notification_title": "Electrical Wires, Cables, Appliances and Protection Devices and Accessories (Quality Control) Order, 2003",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2003-02-17",
+    "publication_date": "2003-02-17",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Switches for domestic and similar purposes must conform to IS 3854 and bear the BIS Standard Mark under the same Order that covers IS 694, as amended (e.g. the S.O. 2604(E) proviso revision).",
+    "source_url": "https://www.eraglobal.co.in/switches-for-domestic-and-similar-purposes/",
+    "products_covered": [
+      "domestic wall switches",
+      "rocker switches",
+      "push-button switches"
+    ],
+    "exemptions": "Export-only consignments may be exempt subject to Central Government approval; there is no blanket domestic exemption."
+  },
+  {
+    "gazette_so_number": "S.O. 4354(E)",
+    "is_number": "IS 1391 (Part 1)",
+    "notification_title": "Air Conditioner and its related Parts, Hermetic Compressor and Temperature Sensing Controls (Quality Control) Order, 2019",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2023-10-01",
+    "publication_date": "2019-12-05",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Unitary (window-type) room air conditioners must conform to IS 1391 (Part 1):2017 and bear the BIS Standard Mark. Final enforcement date was fixed at 1 October 2023 after five rounds of extension since the original 2019 order.",
+    "source_url": "https://www.eraglobal.co.in/room-air-conditioners-specification-part-1-unitary-air-conditioners/",
+    "products_covered": [
+      "window air conditioners",
+      "unitary air conditioners"
+    ],
+    "exemptions": "Hermetic compressors above 7000W (2 TR) exempted for one year under the 2025 Amendment Orders; up to 200 units/year importable for R&D and not for commercial sale."
+  },
+  {
+    "gazette_so_number": "S.O. 4354(E)",
+    "is_number": "IS 1391 (Part 2)",
+    "notification_title": "Air Conditioner and its related Parts, Hermetic Compressor and Temperature Sensing Controls (Quality Control) Order, 2019",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2023-10-01",
+    "publication_date": "2019-12-05",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Split-type room air conditioners must conform to IS 1391 (Part 2):2018 and bear the BIS Standard Mark under the same Order as unitary ACs. Final enforcement date was fixed at 1 October 2023.",
+    "source_url": "https://evtlindia.com/bis-qco-for-split-air-conditioners-is-1391-part-2-2018",
+    "products_covered": [
+      "split air conditioners",
+      "inverter ACs"
+    ],
+    "exemptions": "Hermetic compressors above 7000W (2 TR) exempted for one year under the 2025 Amendment Orders; up to 200 units/year importable for R&D and not for commercial sale."
+  },
+  {
+    "gazette_so_number": "S.O. 4354(E)",
+    "is_number": "IS 10617",
+    "notification_title": "Air Conditioner and its related Parts, Hermetic Compressor and Temperature Sensing Controls (Quality Control) Order, 2019",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2023-10-01",
+    "publication_date": "2019-12-05",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Hermetic compressors used in air conditioning and refrigeration equipment must conform to IS 10617:2018 and bear the BIS Standard Mark under the same Order.",
+    "source_url": "https://www.eraglobal.co.in/hermetic-compressor/",
+    "products_covered": [
+      "hermetic compressors"
+    ],
+    "exemptions": "Compressors above 7000W (2TR) capacity exempted for one year under the February/April 2025 amendment orders; R&D imports up to 200 units/year exempted from commercial sale."
+  },
+  {
+    "gazette_so_number": "S.O. 492(E)",
+    "is_number": "IS 14286 (Part 1)",
+    "notification_title": "Solar Systems, Devices and Components Goods Order, 2025",
+    "issuing_ministry": "Ministry of New and Renewable Energy (MNRE)",
+    "effective_date": "2025-07-27",
+    "publication_date": "2025-01-27",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Crystalline silicon terrestrial PV modules must conform to IS 14286 (Part 1):2023 (design qualification/type approval) plus IS/IEC 61730 Parts 1-2 (safety), and bear the BIS Standard Mark. This order supersedes the 2017 registration order and introduces minimum efficiency thresholds (18% mono-crystalline/thin-film, 17% poly-crystalline).",
+    "source_url": "https://gyellp.com/bis-registration-for-solar-photovoltaic-systems-devices-and-components-goods/",
+    "products_covered": [
+      "monocrystalline silicon solar panels",
+      "polycrystalline silicon solar panels",
+      "bifacial modules"
+    ],
+    "exemptions": "Products exclusively for export are exempt. SPV inverters above 200kW are permitted on self-certification until 30 June 2026 or further orders, per the August 2025 extension notification."
+  },
+  {
+    "gazette_so_number": "S.O. 853(E)",
+    "is_number": "IS 9873 (Part 1)",
+    "notification_title": "Toys (Quality Control) Order, 2020",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2020-09-01",
+    "publication_date": "2020-02-25",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Non-electric toys intended for children under 14 must conform to IS 9873 (Part 1):2018 (mechanical and physical safety) and bear the BIS Standard Mark under the Toys (Quality Control) Order, 2020, as amended in 2020 and 2024.",
+    "source_url": "https://www.standphillindia.in/qco/bis-qco-for-safety-of-toys-is-9873-is-15644-toys-quality-control-order-2020",
+    "products_covered": [
+      "non-electric toys",
+      "play equipment for children under 14"
+    ],
+    "exemptions": "Goods made by artisans registered with the Development Commissioner (Handicrafts) and products registered as Geographical Indications are exempt. Export-only goods are exempt. Up to 300 samples/year importable for R&D under the 2024 amendment."
+  },
+  {
+    "gazette_so_number": "S.O. 853(E)",
+    "is_number": "IS 9873 (Part 3)",
+    "notification_title": "Toys (Quality Control) Order, 2020",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2020-09-01",
+    "publication_date": "2020-02-25",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Toys must comply with IS 9873 (Part 3):2017, which limits migration of hazardous elements (antimony, arsenic, barium, cadmium, chromium, lead, mercury, selenium) from toy materials accessible to children.",
+    "source_url": "https://www.standphillindia.in/qco/bis-qco-for-safety-of-toys-is-9873-is-15644-toys-quality-control-order-2020",
+    "products_covered": [
+      "toy paints and coatings",
+      "toy materials accessible to children"
+    ],
+    "exemptions": "Goods made by artisans registered with the Development Commissioner (Handicrafts) and products registered as Geographical Indications are exempt. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 853(E)",
+    "is_number": "IS 9873 (Part 4)",
+    "notification_title": "Toys (Quality Control) Order, 2020",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2020-09-01",
+    "publication_date": "2020-02-25",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Swings, slides, climbing frames, seesaws and similar activity toys must conform to IS 9873 (Part 4):2017 for structural and safety requirements under the Toys (Quality Control) Order, 2020.",
+    "source_url": "https://evtlindia.com/bis-qco-for-safety-of-non-electric-toys-part-4-swings-slides-and-similar-activity-is-9873-part-4-2017",
+    "products_covered": [
+      "swings",
+      "slides",
+      "climbing frames",
+      "seesaws",
+      "playground activity toys"
+    ],
+    "exemptions": "Goods made by artisans registered with the Development Commissioner (Handicrafts) and products registered as Geographical Indications are exempt. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 853(E)",
+    "is_number": "IS 15644",
+    "notification_title": "Toys (Quality Control) Order, 2020",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2020-09-01",
+    "publication_date": "2020-02-25",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Electric toys must conform to IS 15644:2006 (safety of electric toys) and bear the BIS Standard Mark under the Toys (Quality Control) Order, 2020.",
+    "source_url": "https://www.standphillindia.in/qco/bis-qco-for-safety-of-toys-is-9873-is-15644-toys-quality-control-order-2020",
+    "products_covered": [
+      "electric toys",
+      "battery-operated toys"
+    ],
+    "exemptions": "Goods made by artisans registered with the Development Commissioner (Handicrafts) and products registered as Geographical Indications are exempt. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 1421(E)",
+    "is_number": "IS 15844 (Part 1)",
+    "notification_title": "Footwear made from Leather and other Materials (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2024-08-01",
+    "publication_date": "2024-03-15",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Sports footwear for general purpose use must conform to IS 15844 (Part 1):2023 and bear the BIS Standard Mark under this Order, which supersedes the 2022 order and covers 12 leather footwear categories.",
+    "source_url": "https://taxguru.in/corporate-law/footwear-leather-materials-quality-control-order-2024.html",
+    "products_covered": [
+      "sports footwear",
+      "athletic shoes"
+    ],
+    "exemptions": "Legacy stock may be sold until 31 July 2027 (extended by DPIIT amendments notified 12 June 2026). Up to 4,500 sample pairs/year importable for R&D. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 1421(E)",
+    "is_number": "IS 17043 (Part 1)",
+    "notification_title": "Footwear made from Leather and other Materials (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2024-08-01",
+    "publication_date": "2024-03-15",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Shoes for services and general-purpose use must conform to IS 17043 (Part 1):2024 and bear the BIS Standard Mark under the same Order that covers sports footwear.",
+    "source_url": "https://alephindia.in/bis-qco-for-shoes-specification-part-one-shoes-for-services.php",
+    "products_covered": [
+      "service shoes",
+      "general purpose shoes"
+    ],
+    "exemptions": "Legacy stock may be sold until 31 July 2027. Up to 4,500 sample pairs/year importable for R&D. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 1422(E)",
+    "is_number": "IS 6721",
+    "notification_title": "Footwear made from All Rubber and all Polymeric Material and its Components (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2024-08-01",
+    "publication_date": "2024-03-15",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Sandals and slippers must conform to IS 6721:2023 and bear the BIS Standard Mark under this Order, which covers 8 footwear products and 4 outsole items.",
+    "source_url": "https://taxguru.in/corporate-law/new-quality-control-order-2024-footwear-materials.html",
+    "products_covered": [
+      "rubber sandals",
+      "slippers",
+      "Hawai chappal"
+    ],
+    "exemptions": "Micro and small manufacturing units are exempt. Legacy stock sellable until 31 July 2027. Export-only goods are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 1248(E)",
+    "is_number": "IS 13252 (Part 1)",
+    "notification_title": "Electronics and Information Technology Goods (Requirement for Compulsory Registration) Order, 2021",
+    "issuing_ministry": "Ministry of Electronics and Information Technology (MeitY)",
+    "effective_date": "2021-09-18",
+    "publication_date": "2021-03-18",
+    "certification_scheme": "crs",
+    "is_mandatory": true,
+    "mandate_text": "Laptops, notebooks and tablets must be registered under the BIS Compulsory Registration Scheme (CRS) against IS 13252 (Part 1):2010, under this Order, which supersedes the 2012 order (S.O. 2357(E)). MeitY Notification S.O. 4997(E), dated 29 October 2025, is replacing IS 13252 (Part 1):2010 with IS/IEC 62368-1:2023 as the unified AV/IT/ICT safety standard; both standards run concurrently until 1 November 2028.",
+    "source_url": "https://enviliance.com/regions/south-asia/in/in-product-designs/in-crs",
+    "products_covered": [
+      "laptops",
+      "notebooks",
+      "tablets"
+    ],
+    "exemptions": "Export-only products are exempt. Products already registered under the 2012 Order retain validity but renew under the 2021 Order's provisions."
+  },
+  {
+    "gazette_so_number": "S.O. 920(E)",
+    "is_number": "IS 17658",
+    "notification_title": "Poly Vinyl Chloride (PVC) Homopolymers (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Chemicals and Fertilizers (Department of Chemicals and Petrochemicals)",
+    "effective_date": "2025-12-24",
+    "publication_date": "2024-02-26",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "PVC homopolymers, whether produced domestically or imported, must conform to IS 17658:2021 and bear the BIS Standard Mark. Implementation was deferred three times, most recently to 24 December 2025 via the Third Amendment Order (S.O. 5552(E), dated 24 December 2024).",
+    "source_url": "https://www.legitquest.com/act/poly-vinyl-chloride-pvc-homopolymers-quality-control-order-2024/F6AE",
+    "products_covered": [
+      "PVC homopolymer resin"
+    ],
+    "exemptions": "Goods meant for export are exempt."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17631",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Work chairs used in office and professional environments (revolving, adjustable, ergonomic; fully assembled or ready-to-assemble) must conform to IS 17631:2022 and bear the BIS Standard Mark under the Furniture (Quality Control) Order, 2025.",
+    "source_url": "https://www.standphillindia.in/qco/bis-qco-for-furniture-general-purpose-chairs-stools-work-chairs-tables-beds-storage-units",
+    "products_covered": [
+      "office work chairs",
+      "revolving chairs",
+      "ergonomic chairs"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026. R&D imports, existing-stock clearance, and export-component imports have separate allowances under the 2026 Amendment Orders (S.O. 774(E) and S.O. 1125(E))."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17632",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "General-purpose seating (domestic chairs, dining chairs, plastic/wooden/folding chairs, bar and counter stools) must conform to IS 17632:2022 under the Furniture (Quality Control) Order, 2025.",
+    "source_url": "https://www.standphillindia.in/qco/bis-qco-for-furniture-general-purpose-chairs-stools-work-chairs-tables-beds-storage-units",
+    "products_covered": [
+      "dining chairs",
+      "plastic chairs",
+      "wooden chairs",
+      "folding chairs",
+      "bar stools",
+      "counter stools"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17633",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Tables and desks must conform to IS 17633:2022 and bear the BIS Standard Mark under the Furniture (Quality Control) Order, 2025.",
+    "source_url": "https://articlebiz.com/article/1052817662-bis-certification-for-furniture-in-india-isi-mark-qco-2025-all-6-products-covered-and-complete-process",
+    "products_covered": [
+      "office desks",
+      "tables",
+      "workstations"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17634",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Storage units (cabinets, cupboards, filing and storage furniture) must conform to IS 17634:2022 under the Furniture (Quality Control) Order, 2025.",
+    "source_url": "https://articlebiz.com/article/1052817662-bis-certification-for-furniture-in-india-isi-mark-qco-2025-all-6-products-covered-and-complete-process",
+    "products_covered": [
+      "storage cabinets",
+      "filing cabinets",
+      "storage units"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17635",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Beds must conform to IS 17635:2022 and bear the BIS Standard Mark under the Furniture (Quality Control) Order, 2025.",
+    "source_url": "https://articlebiz.com/article/1052817662-bis-certification-for-furniture-in-india-isi-mark-qco-2025-all-6-products-covered-and-complete-process",
+    "products_covered": [
+      "beds",
+      "cots"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026."
+  },
+  {
+    "gazette_so_number": "S.O. 801(E)",
+    "is_number": "IS 17636",
+    "notification_title": "Furniture (Quality Control) Order, 2025",
+    "issuing_ministry": "Ministry of Commerce and Industry (DPIIT)",
+    "effective_date": "2026-02-14",
+    "publication_date": "2025-02-13",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Bunk beds must conform to IS 17636:2022 under the Furniture (Quality Control) Order, 2025, given their additional structural and fall-safety risk profile versus standard beds.",
+    "source_url": "https://articlebiz.com/article/1052817662-bis-certification-for-furniture-in-india-isi-mark-qco-2025-all-6-products-covered-and-complete-process",
+    "products_covered": [
+      "bunk beds"
+    ],
+    "exemptions": "Export-only goods are exempt. Micro and small enterprises had an extended compliance timeline to 14 August 2026."
+  },
+  {
+    "gazette_so_number": "Not independently confirmed \u2014 notified 23-Oct-2024; amended by S.O. 3526(E), 01-Jan-2025",
+    "is_number": "IS 5405",
+    "notification_title": "Medical Textiles (Quality Control) Order, 2024",
+    "issuing_ministry": "Ministry of Textiles",
+    "effective_date": "2025-01-01",
+    "publication_date": "2024-10-23",
+    "certification_scheme": "isi_mark",
+    "is_mandatory": true,
+    "mandate_text": "Sanitary napkins must conform to IS 5405:2019 and bear the BIS Standard Mark under the Medical Textiles (Quality Control) Order, 2024, which supersedes the 2023 order. Large enterprises must comply from 1 January 2025; SMEs were given until 1 April 2025 (extended by the Second Amendment Order, S.O. 3526(E), dated 1 January 2025, published August 2025).",
+    "source_url": "https://www.bis.gov.in/wp-content/uploads/2024/10/Medical-Textiles-QCO-2024.pdf",
+    "products_covered": [
+      "sanitary napkins",
+      "disposable sanitary napkins"
+    ],
+    "exemptions": "Self-help groups are exempt from the mandatory Standard Mark requirement. Export-only goods are exempt. Pre-certified old stock may be sold without the ISI mark until 31 December 2025.",
+    "verification_note": "Every fact here (date, ministry, IS number, compliance deadlines) is confirmed by multiple independent sources including a direct BIS PDF and the amendment order's own gazette number. The ONE thing not found in a confirmable source is the principal 2024 order's own S.O. number \u2014 only its later amendment's S.O. 3526(E) was locatable. Treat gazette_so_number as unverified until you can pull the original notification."
+  },
+  {
+    "gazette_so_number": "S.O. 2357(E)",
+    "is_number": "IS 10322 : Part 5 : Sec 3",
+    "notification_title": "Electronics and IT Goods (Requirements for Compulsory Registration) Order",
+    "issuing_ministry": "Ministry of Electronics and Information Technology (MeitY)",
+    "effective_date": "2012-10-03",
+    "publication_date": "2012-09-07",
+    "certification_scheme": "crs",
+    "is_mandatory": true,
+    "mandate_text": "LED Luminaires for Road and Street lighting must mandatorily carry BIS CRS registration under the Electronics and IT Goods Quality Control Order. Bidders must submit valid CRS certificate numbers; certificates must be current at time of supply.",
+    "source_url": "https://www.meity.gov.in/esdm/standards",
+    "products_covered": [
+      "LED luminaires",
+      "Road and street lighting",
+      "LED street lights"
+    ],
+    "exemptions": "None."
   }
 ]

@@ -13,6 +13,17 @@ Endpoints:
 import logging
 import os
 
+# ---------------------------------------------------------------------------
+# OpenMP safety — MUST run before faiss / torch / lightgbm are imported
+# (i.e. before `from src.recommender import Recommender` below). Those wheels
+# each bundle their own copy of libomp; initialising a second OpenMP runtime
+# in a single process aborts with SIGSEGV on macOS. This flag lets them
+# coexist. Pinning to one thread also trims memory + thread oversubscription
+# on the 512 MB Render box. setdefault() so an explicit env var still wins.
+# ---------------------------------------------------------------------------
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -55,15 +66,34 @@ async def lifespan(app: FastAPI):
     global analyzer, recommender, startup_status
     logger.info("Lifespan starting — Initialising Analyzer…")
     analyzer = Analyzer()
-    
-    # Start recommender in a background thread so FastAPI can bind to the port
-    # and answer /health checks immediately.
-    startup_status = "starting"
-    thread = threading.Thread(target=load_recommender, daemon=True)
-    thread.start()
-    
+
+    if os.getenv("SKIP_RECOMMENDER", "").lower() == "true":
+        # Combined-service mode: /recommend is unused; skip the 300+ MB Recommender
+        # (FAISS index + BM25 + numpy embeddings) so the combined backend+ai-engine
+        # process fits within Render Free 512 MB.
+        # We still need the applicability ML model loaded for MLReasoner to work.
+        logger.info("SKIP_RECOMMENDER=true — loading applicability model directly (no Recommender).")
+        try:
+            import os as _os
+            from src.ml.applicability_model import load_applicability_model
+            _root = _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", ".."))
+            load_applicability_model(
+                model_path=_os.path.join(_root, "standiq_applicability_model_v2.joblib"),
+                metadata_path=_os.path.join(_root, "standiq_applicability_model_v2_metadata.json"),
+            )
+            logger.info("Applicability model loaded (SKIP_RECOMMENDER path).")
+        except Exception as exc:
+            logger.error("Failed to load applicability model in SKIP_RECOMMENDER mode: %s", exc)
+        startup_status = "ok"
+    else:
+        # Start recommender in a background thread so FastAPI can bind to the port
+        # and answer /health checks immediately.
+        startup_status = "starting"
+        thread = threading.Thread(target=load_recommender, daemon=True)
+        thread.start()
+
     yield
-    
+
     logger.info("Lifespan shutting down.")
 
 app = FastAPI(
@@ -93,6 +123,9 @@ class Requirement(BaseModel):
     category: str = "other"
     is_reference: Optional[str] = None
     cited_year: Optional[int] = None
+    relevance_score: Optional[float] = None
+    semantic_score: Optional[float] = None
+
     cited_designation: Optional[str] = None
     location: Optional[str] = None
     page: Optional[int] = None
@@ -107,12 +140,20 @@ class Standard(BaseModel):
     title: str
     status: str
     year: Optional[int] = None
+    relevance_score: Optional[float] = None
+    semantic_score: Optional[float] = None
+
 
 class AimlRequest(BaseModel):
     analysis_id: str
     extracted_text: str
     requirements: List[Requirement]
+    # Pooled across requirements; accepted for compatibility, never reasoned over.
     retrieved_standards: List[Standard]
+    # requirement_id -> the standards retrieved for that requirement only, with
+    # that requirement's own scores. The sole reasoning input per requirement;
+    # a requirement with no entry has no candidates.
+    requirement_candidates: Dict[str, List[Standard]] = Field(default_factory=dict)
 
 class AimlFinding(BaseModel):
     finding_id: str

@@ -1,217 +1,81 @@
 """
 ai-engine/src/search.py
 
-Hybrid retrieval layer combining:
-  - BM25Retriever  — exact/lexical matching (great for IS numbers, IP ratings, etc.)
-  - VectorStore    — semantic similarity (cosine via IndexFlatIP on normalised embeddings)
-  - HybridRetriever — merges both with Reciprocal Rank Fusion, deduplicates by IS number
-
-Removing the dead `search_index(query_embedding): pass` stub.
+Semantic search via Qdrant Cloud.
+Falls back to [] on ANY failure — never crashes the pipeline.
 """
+from __future__ import annotations
 
+import os
 import logging
-import math
-import re
-from collections import defaultdict
-from typing import Dict, List, Optional, Tuple
-
-import faiss
-import numpy as np
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
+COLLECTION_NAME = "bis_standards_v1"
 
-# ---------------------------------------------------------------------------
-# BM25 Retriever (pure Python, no extra dependencies)
-# ---------------------------------------------------------------------------
 
-class BM25Retriever:
+def _get_client():
+    """Lazy Qdrant client. Returns None if URL missing or connection fails."""
+    url = os.environ.get("QDRANT_URL", "").strip()
+    if not url:
+        logger.warning("QDRANT_URL not set — semantic search disabled")
+        return None
+    try:
+        from qdrant_client import QdrantClient
+        return QdrantClient(
+            url=url,
+            api_key=os.environ.get("QDRANT_API_KEY"),
+            timeout=10,
+        )
+    except Exception as exc:
+        logger.error("Qdrant connect failed: %s", exc)
+        return None
+
+
+def semantic_search(
+    query: str,
+    top_k: int = 10,
+    score_threshold: float = 0.5,
+) -> list[dict[str, Any]]:
     """
-    Okapi BM25 retriever over a corpus of documents.
-
-    Parameters
-    ----------
-    k1 : float — term frequency saturation parameter (default 1.5)
-    b  : float — length normalization parameter (default 0.75)
+    Returns top_k standards matching the query.
+    Returns [] on any error — NEVER raises.
     """
+    if not query or not query.strip():
+        return []
 
-    def __init__(self, k1: float = 1.5, b: float = 0.75):
-        self.k1 = k1
-        self.b = b
-        self.corpus: List[List[str]] = []
-        self.doc_freqs: Dict[str, int] = {}
-        self.idf: Dict[str, float] = {}
-        self.doc_len: List[int] = []
-        self.avgdl: float = 0.0
-        self.n_docs: int = 0
+    client = _get_client()
+    if client is None:
+        return []
 
-    @staticmethod
-    def _tokenize(text: str) -> List[str]:
-        """
-        Lowercase and split on non-alphanumeric characters.
-        Keeps tokens >= 2 chars.
-        Examples:
-          "IS 10322:Part 5" → ["is", "10322", "part"]
-          "IP66"            → ["ip66"]
-          "5700K"           → ["5700k"]
-        """
-        return [t for t in re.split(r"[^a-z0-9]+", text.lower()) if len(t) >= 2]
+    try:
+        from src.embedding import get_embedding
+        vec = get_embedding(query.strip(), task_type="RETRIEVAL_QUERY")
+    except Exception as exc:
+        logger.warning("Embedding failed: %s", exc)
+        return []
 
-    def fit(self, documents: List[str]) -> "BM25Retriever":
-        """Fit the BM25 model on a list of document strings."""
-        self.corpus = [self._tokenize(doc) for doc in documents]
-        self.n_docs = len(self.corpus)
-        self.doc_len = [len(doc) for doc in self.corpus]
-        self.avgdl = sum(self.doc_len) / max(self.n_docs, 1)
+    try:
+        hits = client.query_points(
+            collection_name=COLLECTION_NAME,
+            query=vec,
+            limit=top_k,
+            score_threshold=score_threshold,
+            with_payload=True,
+        ).points
+    except Exception as exc:
+        logger.warning("Qdrant search failed: %s", exc)
+        return []
 
-        # Document frequency
-        self.doc_freqs = defaultdict(int)
-        for doc in self.corpus:
-            for term in set(doc):
-                self.doc_freqs[term] += 1
-
-        # IDF — Robertson-Sparck Jones variant
-        self.idf = {}
-        for term, df in self.doc_freqs.items():
-            self.idf[term] = math.log((self.n_docs - df + 0.5) / (df + 0.5) + 1.0)
-
-        return self
-
-    def get_scores(self, query: str) -> np.ndarray:
-        """Return BM25 scores for all documents against the query."""
-        query_terms = self._tokenize(query)
-        scores = np.zeros(self.n_docs, dtype=float)
-
-        for term in query_terms:
-            if term not in self.idf:
-                continue
-            idf = self.idf[term]
-            for i, doc in enumerate(self.corpus):
-                tf = doc.count(term)
-                dl = self.doc_len[i]
-                numerator = tf * (self.k1 + 1)
-                denominator = tf + self.k1 * (1 - self.b + self.b * dl / max(self.avgdl, 1))
-                scores[i] += idf * numerator / max(denominator, 1e-9)
-
-        return scores
-
-    def search(self, query: str, top_k: int = 20) -> Tuple[np.ndarray, np.ndarray]:
-        """Return (scores, indices) of the top_k documents."""
-        scores = self.get_scores(query)
-        top_indices = np.argsort(scores)[::-1][:top_k]
-        return scores[top_indices], top_indices
-
-
-# ---------------------------------------------------------------------------
-# Vector Store (FAISS inner-product = cosine for normalised embeddings)
-# ---------------------------------------------------------------------------
-
-class VectorStore:
-    """FAISS index using inner-product (cosine similarity on L2-normalised vectors)."""
-
-    def __init__(self, dimension: int):
-        self.dimension = dimension
-        # IndexFlatIP gives cosine similarity when embeddings are L2-normalised
-        self.index = faiss.IndexFlatIP(dimension)
-
-    def add_embeddings(self, embeddings: np.ndarray) -> None:
-        """Add a batch of normalised embeddings to the index."""
-        embeddings_np = np.array(embeddings, dtype="float32")
-        self.index.add(embeddings_np)
-
-    def search(self, query_embedding: np.ndarray, top_k: int = 20) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Search for the top_k nearest neighbours.
-
-        Returns (similarities, indices) — similarities are cosine scores in [0, 1]
-        for normalised embeddings.
-        """
-        query_np = np.array(query_embedding, dtype="float32").reshape(1, -1)
-        similarities, indices = self.index.search(query_np, top_k)
-        return similarities[0], indices[0]
-
-
-# ---------------------------------------------------------------------------
-# Hybrid Retriever — Reciprocal Rank Fusion of BM25 + vector results
-# ---------------------------------------------------------------------------
-
-class HybridRetriever:
-    """
-    Combines BM25 (lexical) and FAISS (semantic) results using
-    Reciprocal Rank Fusion (RRF) and deduplicates by IS number.
-
-    Why RRF?  It fuses ranked lists without requiring score normalisation —
-    robust across very different score scales.
-    """
-
-    RRF_K = 60  # standard RRF constant
-
-    def __init__(self):
-        self.bm25: Optional[BM25Retriever] = None
-        self.vector_store: Optional[VectorStore] = None
-        self.standards: List[dict] = []
-
-    def fit(self, standards: List[dict], embeddings: np.ndarray) -> "HybridRetriever":
-        """Build BM25 index and FAISS vector store from the standards corpus."""
-        self.standards = standards
-        search_texts = [std.get("search_text", "") for std in standards]
-
-        logger.info("Building BM25 index over %d standards…", len(standards))
-        self.bm25 = BM25Retriever().fit(search_texts)
-
-        logger.info("Building FAISS index (dim=%d)…", embeddings.shape[1])
-        self.vector_store = VectorStore(dimension=embeddings.shape[1])
-        self.vector_store.add_embeddings(embeddings)
-
-        return self
-
-    def search(self, query: str, query_embedding: np.ndarray, top_k: int = 20) -> List[dict]:
-        """
-        Retrieve top_k candidates using hybrid RRF search.
-
-        Returns a list of standard dicts enriched with:
-          - bm25_score, semantic_score, rrf_score
-          - retrieval_source: 'bm25' | 'semantic' | 'both'
-        """
-        if self.bm25 is None or self.vector_store is None:
-            raise RuntimeError("HybridRetriever not fitted — call fit() first.")
-
-        # --- BM25 results ---
-        bm25_scores, bm25_indices = self.bm25.search(query, top_k=top_k)
-        bm25_map: Dict[int, float] = {
-            int(idx): float(score) for idx, score in zip(bm25_indices, bm25_scores)
+    return [
+        {
+            "is_number": h.payload.get("is_number", ""),
+            "title": h.payload.get("title", ""),
+            "scope": h.payload.get("scope"),
+            "score": h.score,
+            "payload": h.payload,
         }
-
-        # --- Vector results ---
-        sem_scores, sem_indices = self.vector_store.search(query_embedding, top_k=top_k)
-        sem_map: Dict[int, float] = {
-            int(idx): float(score) for idx, score in zip(sem_indices, sem_scores) if idx != -1
-        }
-
-        # --- Reciprocal Rank Fusion ---
-        rrf: Dict[int, float] = defaultdict(float)
-        for rank, idx in enumerate(bm25_indices):
-            rrf[int(idx)] += 1.0 / (self.RRF_K + rank + 1)
-        for rank, idx in enumerate(sem_indices):
-            if idx != -1:
-                rrf[int(idx)] += 1.0 / (self.RRF_K + rank + 1)
-
-        # Sort by RRF score descending, take top_k
-        sorted_indices = sorted(rrf, key=lambda i: rrf[i], reverse=True)[:top_k]
-
-        results = []
-        for idx in sorted_indices:
-            std = self.standards[idx].copy()
-            std["bm25_score"] = round(bm25_map.get(idx, 0.0), 4)
-            std["semantic_score"] = round(sem_map.get(idx, 0.0), 4)
-            std["rrf_score"] = round(rrf[idx], 6)
-
-            in_bm25 = idx in bm25_map
-            in_sem = idx in sem_map
-            std["retrieval_source"] = (
-                "both" if (in_bm25 and in_sem) else ("bm25" if in_bm25 else "semantic")
-            )
-
-            results.append(std)
-
-        return results
+        for h in hits
+        if h.payload
+    ]
