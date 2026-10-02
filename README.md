@@ -8,28 +8,33 @@ ManakSetu is a compliance and procurement intelligence platform designed to inte
 
 ```mermaid
 flowchart LR
-    User([Client UI]) -->|Raw Tender Document| API[FastAPI Orchestrator]
+    User([Client UI]) <-->|JSON / PDF| API{FastAPI Orchestrator}
     
-    subgraph Document Pipeline
-        API -->|Layout & Text Extraction| Parser[PyMuPDF Parser]
-        Parser -->|Semantic Chunking| Embedding[MiniLM Embeddings]
+    API -->|Extract| DocPipe
+    
+    subgraph DocPipe [Document Pipeline]
+        direction TB
+        P[PyMuPDF Parser] --> E[MiniLM Embeddings]
     end
     
-    subgraph Core Reasoning Pipeline
-        Embedding -->|Hybrid Retrieval| VectorStore[(FAISS / pgvector)]
-        VectorStore -->|Candidate Standards| Ranker[Semantic Ranker]
-        Ranker -->|Re-ranked Context| ReqAnalysis[Requirement Decomposer]
-        ReqAnalysis -->|Isolated Claims| Provenance[Evidence Tracker]
+    DocPipe -->|Vectors| ReasonPipe
+    
+    subgraph ReasonPipe [Core Reasoning]
+        direction TB
+        V[(FAISS / Qdrant)] --> R[Semantic Ranker]
+        R --> Req[Requirement Decomposer]
     end
     
-    subgraph Validation & Synthesis
-        Provenance -->|Verified Citations| IssueDetection[QCO & Conflict Scanner]
-        IssueDetection -->|Risk Flags| Confidence[Uncertainty Scorer]
-        Confidence -->|Scored Metrics| Recommender[Payload Orchestrator]
+    ReasonPipe -->|Claims| ValPipe
+    
+    subgraph ValPipe [Validation & Synthesis]
+        direction TB
+        Prov[Evidence Tracker] --> Iss[QCO & Conflict Scanner]
+        Iss --> Conf[Uncertainty Scorer]
+        Conf --> Rec[Payload Orchestrator]
     end
     
-    Recommender -->|JSON Validation| API
-    API -->|Compliance Report| User
+    ValPipe -->|Verified Data| API
 ```
 
 ## Core Intelligence Capabilities
@@ -64,18 +69,16 @@ ManakSetu operates on a foundation of MiniLM embeddings and vector search. To en
 
 *   **Frontend:** React 18, Vite, Tailwind CSS (Vercel)
 *   **Backend API:** Python, FastAPI, SQLAlchemy, asyncpg, PyMuPDF (Render)
-*   **AI Engine:** Python, FastAPI, Google Gemini API, Scikit-Learn, FAISS (Render)
-*   **Database:** PostgreSQL with `pgvector`
+*   **Inference Service:** Python, FastAPI, Google Gemini API, Scikit-Learn, FAISS (Render)
+*   **Database:** PostgreSQL with `pgvector`, Qdrant (Vector DB)
 
 ## System Architecture & Deployment
 
-To optimize resource utilization, the backend and AI Engine are designed to run concurrently within a single environment, communicating over local HTTP interfaces. 
+The platform is designed with a decoupled microservice architecture, allowing the core reasoning pipeline to scale independently from the client-facing API.
 
 ### Production Deployment
-*   **Frontend:** Hosted independently on Vercel.
-*   **Backend & AI Engine:** Orchestrated via `start.sh` to run in a single Render container. 
-    *   The AI Engine operates on an internal port (`10001`) in a lightweight inference mode (`SKIP_RECOMMENDER=true`), loading the pre-trained `.joblib` applicability models directly into memory.
-    *   The public-facing Backend binds to the environment `$PORT` and routes analysis requests to the internal AI Engine.
+*   **Frontend:** Hosted independently on Vercel as a globally distributed static edge application.
+*   **Backend & Inference Service:** Deployed as highly optimized FastAPI services on Render. The primary API acts as a secure gateway, managing document ingestion and routing complex reasoning workloads to the dedicated internal Inference Service.
 
 ## Local Development Setup
 
@@ -85,7 +88,7 @@ To optimize resource utilization, the backend and AI Engine are designed to run 
    cd ManakSetu
    ```
 
-2. **Backend & AI Engine Setup:**
+2. **Backend & Inference Service Setup:**
    Ensure Python 3.11+ is installed.
    ```bash
    python -m venv .venv
@@ -96,7 +99,7 @@ To optimize resource utilization, the backend and AI Engine are designed to run 
    Set up your `.env` file with required database and API credentials (e.g., `GEMINI_API_KEY`, PostgreSQL URI).
 
 3. **Start the Backend Services:**
-   You can utilize the deployment script to launch both the API and the AI engine locally:
+   You can utilize the deployment script to launch the unified API environment locally:
    ```bash
    ./start.sh
    ```
